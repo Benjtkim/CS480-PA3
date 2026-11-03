@@ -228,8 +228,8 @@ class Component:
             rotationMatW = self.glUtility.rotate(self.wAngle, self.wAxis, False)
         scalingMat = self.glUtility.scale(*self.currentScaling, False)
 
-        self.transformationMat = parentTransformationMat @ translationMat @ self.postRotationMat @ self.outRotation @ rotationMatU @ rotationMatV @ \
-                                 rotationMatW @ self.inRotation @ self.preRotationMat @ scalingMat
+        self.transformationMat = parentTransformationMat @ translationMat @ self.postRotationMat @ self.outRotation @ rotationMatW @ rotationMatV @ \
+                                 rotationMatU @ self.inRotation @ self.preRotationMat @ scalingMat
 
         for c in self.children:
             c.update(self.transformationMat)

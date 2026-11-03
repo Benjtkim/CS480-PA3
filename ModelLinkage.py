@@ -65,7 +65,7 @@ class Linkage(Component, EnvironmentObject):
     """
     A Linkage with animation enabled and is defined as an object in environment
     """
-    components: list[Component] | None = None
+    components: dict[str, Component] | None = None
     rotation_speed: list[list[float]] | None = None
     translation_speed: Point | None = None
 
@@ -73,7 +73,9 @@ class Linkage(Component, EnvironmentObject):
         super(Linkage, self).__init__(position)
 
         # spider = ModelSpider(parent, Point(0,0,0), shaderProg, 0.1)
+        # self.components = spider.components
         # self.addChild(spider)
+        # self.rotation_speed = 2
 
         dragonfly = ModelDragonfly(parent, Point(0,0,0), shaderProg, 0.1)
         self.addChild(dragonfly)
@@ -88,20 +90,20 @@ class Linkage(Component, EnvironmentObject):
         #   2. The linkages should move back and forth in a periodic motion, as the creatures move about the vivarium.
         #   For example, a bird flaps its wings, a fish wiggles its fin(s), a terrestrial creature moves its legs.
 
-        # create periodic animation for creature joints
-        # for i, comp in enumerate(self.components):
-        #     comp.rotate(self.rotation_speed[i][0], comp.uAxis)
-        #     comp.rotate(self.rotation_speed[i][1], comp.vAxis)
-        #     comp.rotate(self.rotation_speed[i][2], comp.wAxis)
-        #     if comp.uAngle in comp.uRange:  # rotation reached the limit
-        #         self.rotation_speed[i][0] *= -1
-        #     if comp.vAngle in comp.vRange:
-        #         self.rotation_speed[i][1] *= -1
-        #     if comp.wAngle in comp.wRange:
-        #         self.rotation_speed[i][2] *= -1
-        # self.vAngle = (self.vAngle + 3) % 360
+        # iterableComponents = ["upperLeftLegLink1", "middleLeftLegLink1", "lowerLeftLegLink1", "upperRightLegLink1", "middleRightLegLink1", "lowerRightLegLink1"]
+        # for str, comp in self.components.items():
+        #     if str in iterableComponents:
+        #         newAngle = comp.vAngle + self.rotation_speed
+        #         if newAngle < comp.vRange[0] or newAngle > comp.vRange[1]:
+        #             self.rotation_speed *= -1
+        #         comp.rotate(self.rotation_speed, comp.vAxis)
 
+        # self.update()
         pass
+
+
+
+
 
     def stepForward(self, potentialsOn: bool) -> None:
 
@@ -164,7 +166,7 @@ class ModelSpider(Component):
     Define our linkage model
     """
 
-    components: list[Component] | None = None
+    components: dict[str, Component] | None = None
     contextParent: object | None = None
 
     def __init__(self, parent: object, position: Point, shaderProg: object,
@@ -314,100 +316,48 @@ class ModelSpider(Component):
         lowerRightLegLink1.addChild(lowerRightLegLink2)
         lowerRightLegLink2.addChild(lowerRightLegLink3)
 
-        self.components = [
-            body,
-            face,
-            eye1,
-            eye2,
-            pupil1,
-            pupil2,
-            tooth1,
-            tooth2,
-            tailPart1,
-            tailPart2,
-            upperLeftLegLink1,
-            upperLeftLegLink2,
-            upperLeftLegLink3,
-            middleLeftLegLink1,
-            middleLeftLegLink2,
-            middleLeftLegLink3,
-            lowerLeftLegLink1,
-            lowerLeftLegLink2,
-            lowerLeftLegLink3,
-            upperRightLegLink1,
-            upperRightLegLink2,
-            upperRightLegLink3,
-            middleRightLegLink1,
-            middleRightLegLink2,
-            middleRightLegLink3,
-            lowerRightLegLink1,
-            lowerRightLegLink2,
-            lowerRightLegLink3,
-        ]
+        self.components = {
+            "body": body,
+            "face": face,
+            "eye1": eye1,
+            "eye2": eye2,
+            "pupil1": pupil1,
+            "pupil2": pupil2,
+            "tooth1": tooth1,
+            "tooth2": tooth2,
+            "tailPart1": tailPart1,
+            "tailPart2": tailPart2,
+            "upperLeftLegLink1": upperLeftLegLink1,
+            "upperLeftLegLink2": upperLeftLegLink2,
+            "upperLeftLegLink3": upperLeftLegLink3,
+            "middleLeftLegLink1": middleLeftLegLink1,
+            "middleLeftLegLink2": middleLeftLegLink2,
+            "middleLeftLegLink3": middleLeftLegLink3,
+            "lowerLeftLegLink1": lowerLeftLegLink1,
+            "lowerLeftLegLink2": lowerLeftLegLink2,
+            "lowerLeftLegLink3": lowerLeftLegLink3,
+            "upperRightLegLink1": upperRightLegLink1,
+            "upperRightLegLink2": upperRightLegLink2,
+            "upperRightLegLink3": upperRightLegLink3,
+            "middleRightLegLink1": middleRightLegLink1,
+            "middleRightLegLink2": middleRightLegLink2,
+            "middleRightLegLink3": middleRightLegLink3,
+            "lowerRightLegLink1": lowerRightLegLink1,
+            "lowerRightLegLink2": lowerRightLegLink2,
+            "lowerRightLegLink3": lowerRightLegLink3,
+        }
 
-        face.setRotateExtent(face.uAxis, -30, 30)
-        face.setRotateExtent(face.vAxis, -30, 30)
-        face.setRotateExtent(face.wAxis, -30, 30)
-
-        eye1.setRotateExtent(eye1.uAxis, -30, 30)
-        eye1.setRotateExtent(eye1.vAxis, -30, 30)
-        eye1.setRotateExtent(eye1.wAxis, -30, 30)
-
-        eye2.setRotateExtent(eye2.uAxis, -30, 30)
-        eye2.setRotateExtent(eye2.vAxis, -30, 30)
-        eye2.setRotateExtent(eye2.wAxis, -30, 30)
-
-        pupil1.setRotateExtent(pupil1.uAxis, -30, 30)
-        pupil1.setRotateExtent(pupil1.vAxis, -30, 30)
-        pupil1.setRotateExtent(pupil1.wAxis, -30, 30)
-
-        pupil2.setRotateExtent(pupil2.uAxis, -30, 30)
-        pupil2.setRotateExtent(pupil2.vAxis, -30, 30)
-        pupil2.setRotateExtent(pupil2.wAxis, -30, 30)
-
-        tooth1.setRotateExtent(tooth1.uAxis, -5, 30)
-        tooth1.setRotateExtent(tooth1.vAxis, -20, 10)
-        tooth1.setRotateExtent(tooth1.wAxis, -15, 15)
-
-        tooth2.setRotateExtent(tooth2.uAxis, -5, 30)
-        tooth2.setRotateExtent(tooth2.vAxis, -10, 20)
-        tooth2.setRotateExtent(tooth2.wAxis, -15, 15)
-
-        upperLeftLegLink1.setRotateExtent(upperLeftLegLink1.uAxis, -60, 60)
         upperLeftLegLink1.setRotateExtent(upperLeftLegLink1.vAxis, 50, 100)
-        upperLeftLegLink1.setRotateExtent(upperLeftLegLink1.wAxis, -40, 60)
 
-        upperLeftLegLink2.setRotateExtent(upperLeftLegLink2.uAxis, -30, 30)
-        upperLeftLegLink2.setRotateExtent(upperLeftLegLink2.vAxis, -30, 30)
-        upperLeftLegLink2.setRotateExtent(upperLeftLegLink2.wAxis, -30, 30)
-
-        upperLeftLegLink3.setRotateExtent(upperLeftLegLink3.uAxis, -30, 30)
-        upperLeftLegLink3.setRotateExtent(upperLeftLegLink3.vAxis, -30, 30)
-        upperLeftLegLink3.setRotateExtent(upperLeftLegLink3.wAxis, -30, 30)
-
-        upperRightLegLink1.setRotateExtent(upperRightLegLink1.uAxis, 120, 240)
-        upperRightLegLink1.setRotateExtent(upperRightLegLink1.vAxis, 230, 280)
-        upperRightLegLink1.setRotateExtent(upperRightLegLink1.wAxis, 140, 240)
-
-        middleLeftLegLink1.setRotateExtent(middleLeftLegLink1.uAxis, -60, 60)
         middleLeftLegLink1.setRotateExtent(middleLeftLegLink1.vAxis, 50, 100)
-        middleLeftLegLink1.setRotateExtent(middleLeftLegLink1.wAxis, -40, 60)
 
-        lowerLeftLegLink1.setRotateExtent(lowerLeftLegLink1.uAxis, -60, 60)
         lowerLeftLegLink1.setRotateExtent(lowerLeftLegLink1.vAxis, 50, 100)
-        lowerLeftLegLink1.setRotateExtent(lowerLeftLegLink1.wAxis, -40, 60)
 
-        middleRightLegLink1.setRotateExtent(middleRightLegLink1.uAxis, 120, 240)
+        upperRightLegLink1.setRotateExtent(upperRightLegLink1.vAxis, 230, 280)
+
         middleRightLegLink1.setRotateExtent(middleRightLegLink1.vAxis, 230, 280)
-        middleRightLegLink1.setRotateExtent(middleRightLegLink1.wAxis, 140, 240)
 
-        lowerRightLegLink1.setRotateExtent(lowerRightLegLink1.uAxis, 120, 240)
         lowerRightLegLink1.setRotateExtent(lowerRightLegLink1.vAxis, 230, 280)
-        lowerRightLegLink1.setRotateExtent(lowerRightLegLink1.wAxis, 140, 240)
-
-        tailPart1.setRotateExtent(tailPart1.uAxis, -30, 30)
-        tailPart1.setRotateExtent(tailPart1.vAxis, -30, 30)
-        tailPart1.setRotateExtent(tailPart1.wAxis, -30, 30)
 
 
 class ModelDragonfly(Component):
@@ -425,6 +375,44 @@ class ModelDragonfly(Component):
         self.components = []
         self.contextParent = parent
         
-        body = Sphere(Point(0,0,0), shaderProg, [1, 0.2333, 0.3333], Ct.GREEN)
+        # body = Sphere(Point(0,0,0), shaderProg, [1, 0.2333, 0.3333], Ct.GREEN)
+        # face = Sphere(Point(0, +1e-4, 0.4), shaderProg, [0.2, 0.15, 0.1667], Ct.DARKGREEN)
+
+        body = Sphere(Point(0,0,0), shaderProg, [0.2333, 0.2333, 0.7], Ct.GREEN)
+
+        face = Sphere(Point(0, +1e-4, 0.8), shaderProg, [0.2, 0.2, 0.2], Ct.DARKGREEN)
+
+        wing1 = Sphere(Point(-0.6, 0.2, 0.3), shaderProg, [0.7, 0.05, 0.2], Ct.RED)
+
+        wing2 = Sphere(Point(0.6, 0.2, 0.3), shaderProg, [0.7, 0.05, 0.2], Ct.RED)
+
+        wing3 = Sphere(Point(-0.6, 0.2, -0.1), shaderProg, [0.7, 0.05, 0.2], Ct.RED)
+
+        wing4 = Sphere(Point(0.6, 0.2, -0.1), shaderProg, [0.7, 0.05, 0.2], Ct.RED)
+
+        tail = Sphere(Point(0,0,-0.5), shaderProg, [0.1, 0.1, 1], Ct.RED)
+
+        eye1 = Sphere(Point(0, 0, 0))
+
+
+        wing1.rotate(15, self.vAxis)
+        wing2.rotate(-15, self.vAxis)
+        wing3.rotate(10, self.vAxis)
+        wing4.rotate(-10, self.vAxis)
+
+        
+
+
         self.addChild(body)
-        self.components = [body]
+        body.addChild(face)
+        body.addChild(wing1)
+        body.addChild(wing2)
+        body.addChild(wing3)
+        body.addChild(wing4)
+        body.addChild(tail)
+        self.components = {
+            "body": body,
+            "face": face,
+            "wing1": wing1,
+            "wing2": wing2
+            }
