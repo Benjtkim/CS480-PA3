@@ -71,30 +71,15 @@ class Linkage(Component, EnvironmentObject):
 
     def __init__(self, parent: object, position: Point, shaderProg: object) -> None:
         super(Linkage, self).__init__(position)
-        arm1 = ModelArm(parent, Point((0, 0, 0)), shaderProg, 0.1)
-        arm2 = ModelArm(parent, Point((0, 0, 0)), shaderProg, 0.1)
-        arm2.setDefaultAngle(120, arm2.vAxis)
-        arm3 = ModelArm(parent, Point((0, 0, 0)), shaderProg, 0.1)
-        arm3.setDefaultAngle(240, arm3.vAxis)
 
-        self.components = arm1.components + arm2.components + arm3.components
-        self.addChild(arm1)
-        self.addChild(arm2)
-        self.addChild(arm3)
+        # spider = ModelSpider(parent, Point(0,0,0), shaderProg, 0.1)
+        # self.addChild(spider)
 
-        self.rotation_speed = []
-        for comp in self.components:
+        dragonfly = ModelDragonfly(parent, Point(0,0,0), shaderProg, 0.1)
+        self.addChild(dragonfly)
 
-            comp.setRotateExtent(comp.uAxis, 0, 35)
-            comp.setRotateExtent(comp.vAxis, -45, 45)
-            comp.setRotateExtent(comp.wAxis, -45, 45)
-            self.rotation_speed.append([0.5, 0, 0])
-
-        self.translation_speed = Point([random.random()-0.5 for _ in range(3)]).normalize() * 0.01
-
-        self.bound_center = Point((0, 0, 0))
-        self.bound_radius = 0.1 * 4
-        self.species_id = 1
+        
+        
 
     def animationUpdate(self) -> None:
         ##### TODO 2: Animate your creature!
@@ -104,19 +89,19 @@ class Linkage(Component, EnvironmentObject):
         #   For example, a bird flaps its wings, a fish wiggles its fin(s), a terrestrial creature moves its legs.
 
         # create periodic animation for creature joints
-        for i, comp in enumerate(self.components):
-            comp.rotate(self.rotation_speed[i][0], comp.uAxis)
-            comp.rotate(self.rotation_speed[i][1], comp.vAxis)
-            comp.rotate(self.rotation_speed[i][2], comp.wAxis)
-            if comp.uAngle in comp.uRange:  # rotation reached the limit
-                self.rotation_speed[i][0] *= -1
-            if comp.vAngle in comp.vRange:
-                self.rotation_speed[i][1] *= -1
-            if comp.wAngle in comp.wRange:
-                self.rotation_speed[i][2] *= -1
-        self.vAngle = (self.vAngle + 3) % 360
+        # for i, comp in enumerate(self.components):
+        #     comp.rotate(self.rotation_speed[i][0], comp.uAxis)
+        #     comp.rotate(self.rotation_speed[i][1], comp.vAxis)
+        #     comp.rotate(self.rotation_speed[i][2], comp.wAxis)
+        #     if comp.uAngle in comp.uRange:  # rotation reached the limit
+        #         self.rotation_speed[i][0] *= -1
+        #     if comp.vAngle in comp.vRange:
+        #         self.rotation_speed[i][1] *= -1
+        #     if comp.wAngle in comp.wRange:
+        #         self.rotation_speed[i][2] *= -1
+        # self.vAngle = (self.vAngle + 3) % 360
 
-        self.update()
+        pass
 
     def stepForward(self, potentialsOn: bool) -> None:
 
@@ -173,7 +158,8 @@ class Linkage(Component, EnvironmentObject):
 
         pass
 
-class ModelArm(Component):
+        
+class ModelSpider(Component):
     """
     Define our linkage model
     """
@@ -187,17 +173,258 @@ class ModelArm(Component):
         super().__init__(position, display_obj)
         self.components = []
         self.contextParent = parent
+        body = Sphere(Point(0,0,0), shaderProg, [0.2333, 0.2333, 0.3333], Ct.GREEN)
 
-        link1 = Cube(Point((0, 0, 0)), shaderProg, [linkageLength / 4, linkageLength / 4, linkageLength], Ct.DARKORANGE1)
-        link2 = Cube(Point((0, 0, linkageLength)), shaderProg, [linkageLength / 4, linkageLength / 4, linkageLength], Ct.DARKORANGE2)
-        link3 = Cube(Point((0, 0, linkageLength)), shaderProg, [linkageLength / 4, linkageLength / 4, linkageLength], Ct.DARKORANGE3)
-        link4 = Cube(Point((0, 0, linkageLength)), shaderProg, [linkageLength / 4, linkageLength / 4, linkageLength], Ct.DARKORANGE4)
+        face = Sphere(Point(0, +1e-4, 0.4), shaderProg, [0.2, 0.15, 0.1667], Ct.DARKGREEN)
 
-        self.addChild(link1)
-        link1.addChild(link2)
-        link2.addChild(link3)
-        link3.addChild(link4)
+        eye1 = Sphere(Point(-0.0833, 1e-4, 0.15), shaderProg, [0.0333, 0.0333, 0.0333], Ct.BLACK)
 
-        self.components = [link1, link2, link3, link4]
+        eye2 = Sphere(Point(0.0833, 1e-4, 0.15), shaderProg, [0.0333, 0.0333, 0.0333], Ct.BLACK)
+
+        pupil1 = Sphere(Point(0.0133, 1e-4, 0.0267), shaderProg, [0.01, 0.01, 0.01], Ct.WHITE)
+
+        pupil2 = Sphere(Point(0.0133, 1e-4, 0.0267), shaderProg, [0.01, 0.01, 0.01], Ct.WHITE)
+
+        tooth1 = Cone(Point(-0.0833, -0.0667, 0.1667), shaderProg, [0.01, 0.0333, 0.0667], Ct.RED)
+
+        tooth2 = Cone(Point(0.0833, -0.0667, 0.1667), shaderProg, [0.01, 0.0333, 0.0667], Ct.RED)
+
+        tailPart1 = Sphere(Point(0, 0.05, -0.3233), shaderProg, [-0.0667, -0.0667, -0.0667], Ct.CYAN)
+        tailPart2 = Cone(Point(0, 0.0333, 0.2333), shaderProg, [0.05, 0.05, 0.2667], Ct.BLUE)
+
+        upperLeftLegLink1 = Cylinder(Point(0.1667, 0, 0.2667), shaderProg, [0.0433, 0.0433, 0.1333], Ct.YELLOW)
+        upperLeftLegLink2 = Cylinder(Point(0, 0, 0.21), shaderProg, [0.0433, 0.0433, 0.1167], Ct.BLUE)
+        upperLeftLegLink3 = Cylinder(Point(0, 0, 0.1233), shaderProg, [0.0433, 0.0433, 0.0333], Ct.YELLOW)
+
+        middleLeftLegLink1 = Cylinder(Point(0.1667, 0, 0.1), shaderProg, [0.0433, 0.0433, 0.1333], Ct.YELLOW)
+        middleLeftLegLink2 = Cylinder(Point(0, 0, 0.21), shaderProg, [0.0433, 0.0433, 0.1167], Ct.BLUE)
+        middleLeftLegLink3 = Cylinder(Point(0, 0, 0.1233), shaderProg, [0.0433, 0.0433, 0.0333], Ct.YELLOW)
+
+        lowerLeftLegLink1 = Cylinder(Point(0.1, 0, -0.0667), shaderProg, [0.0433, 0.0433, 0.1333], Ct.YELLOW)
+        lowerLeftLegLink2 = Cylinder(Point(0, 0, 0.21), shaderProg, [0.0433, 0.0433, 0.1167], Ct.BLUE)
+        lowerLeftLegLink3 = Cylinder(Point(0, 0, 0.1233), shaderProg, [0.0433, 0.0433, 0.0333], Ct.YELLOW)
+
+        upperRightLegLink1 = Cylinder(Point(-0.1667, 0, 0.2667), shaderProg, [0.0433, 0.0433, 0.1333], Ct.YELLOW)
+        upperRightLegLink2 = Cylinder(Point(0, 0, 0.21), shaderProg, [0.0433, 0.0433, 0.1167], Ct.BLUE)
+        upperRightLegLink3 = Cylinder(Point(0, 0, 0.1233), shaderProg, [0.0433, 0.0433, 0.0333], Ct.YELLOW)
+
+        middleRightLegLink1 = Cylinder(Point(-0.1667, 0, 0.1), shaderProg, [0.0433, 0.0433, 0.1333], Ct.YELLOW)
+        middleRightLegLink2 = Cylinder(Point(0, 0, 0.21), shaderProg, [0.0433, 0.0433, 0.1167], Ct.BLUE)
+        middleRightLegLink3 = Cylinder(Point(0, 0, 0.1233), shaderProg, [0.0433, 0.0433, 0.0333], Ct.YELLOW)
+
+        lowerRightLegLink1 = Cylinder(Point(-0.1, 0, -0.0667), shaderProg, [0.0433, 0.0433, 0.1333], Ct.YELLOW)
+        lowerRightLegLink2 = Cylinder(Point(0, 0, 0.21), shaderProg, [0.0433, 0.0433, 0.1167], Ct.BLUE)
+        lowerRightLegLink3 = Cylinder(Point(0, 0, 0.1233), shaderProg, [0.0433, 0.0433, 0.0333], Ct.YELLOW)
+
+        tooth1.rotate(30, self.uAxis)
+        tooth1.rotate(-20, self.vAxis)
+
+        tooth2.rotate(30, self.uAxis)
+        tooth2.rotate(20, self.vAxis)
+
+        tailPart2.rotate(220, self.uAxis)
+
+        upperLeftLegLink1.rotate(20, self.uAxis)
+        upperLeftLegLink1.rotate(90, self.vAxis)
+        
+        upperLeftLegLink2.rotate(20, self.uAxis)
+
+        upperLeftLegLink3.rotate(30, self.uAxis)
+
+        middleLeftLegLink1.rotate(20, self.uAxis)
+        middleLeftLegLink1.rotate(90, self.vAxis)
+
+        middleLeftLegLink2.rotate(20, self.uAxis)
+
+        middleLeftLegLink3.rotate(30, self.uAxis)
+
+        lowerLeftLegLink1.rotate(20, self.uAxis)
+        lowerLeftLegLink1.rotate(90, self.vAxis)
+        
+        lowerLeftLegLink2.rotate(20, self.uAxis)
+
+        lowerLeftLegLink3.rotate(30, self.uAxis)
+
+        upperRightLegLink1.rotate(200, self.uAxis)
+        upperRightLegLink1.rotate(270, self.vAxis)
+        upperRightLegLink1.rotate(180, self.wAxis)
+        upperRightLegLink1.setDefaultW([0, 0, -1])
+
+        upperRightLegLink2.rotate(20, self.uAxis)
+
+        upperRightLegLink3.rotate(30, self.uAxis)
+
+        middleRightLegLink1.rotate(200, self.uAxis)
+        middleRightLegLink1.rotate(270, self.vAxis)
+        middleRightLegLink1.rotate(180, self.wAxis)
+        middleRightLegLink1.setDefaultW([0, 0, -1])
+
+        middleRightLegLink2.rotate(20, self.uAxis)
+
+        middleRightLegLink3.rotate(30, self.uAxis)
+
+        lowerRightLegLink1.rotate(200, self.uAxis)
+        lowerRightLegLink1.rotate(270, self.vAxis)
+        lowerRightLegLink1.rotate(180, self.wAxis)
+        lowerRightLegLink1.setDefaultW([0, 0, -1])
+
+        lowerRightLegLink2.rotate(20, self.uAxis)
+        lowerRightLegLink3.rotate(30, self.uAxis)
+
+        self.addChild(body)
+
+        body.addChild(face)
+
+        face.addChild(eye1)
+
+        face.addChild(eye2)
+
+        eye1.addChild(pupil1)
+
+        eye2.addChild(pupil2)
+
+        face.addChild(tooth1)
+
+        face.addChild(tooth2)
+
+        body.addChild(tailPart1)
+        tailPart1.addChild(tailPart2)
+
+        body.addChild(upperLeftLegLink1)
+        upperLeftLegLink1.addChild(upperLeftLegLink2)
+        upperLeftLegLink2.addChild(upperLeftLegLink3)
+
+        body.addChild(middleLeftLegLink1)
+        middleLeftLegLink1.addChild(middleLeftLegLink2)
+        middleLeftLegLink2.addChild(middleLeftLegLink3)
+
+        body.addChild(lowerLeftLegLink1)
+        lowerLeftLegLink1.addChild(lowerLeftLegLink2)
+        lowerLeftLegLink2.addChild(lowerLeftLegLink3)
+
+        body.addChild(upperRightLegLink1)
+        upperRightLegLink1.addChild(upperRightLegLink2)
+        upperRightLegLink2.addChild(upperRightLegLink3)
+
+        body.addChild(middleRightLegLink1)
+        middleRightLegLink1.addChild(middleRightLegLink2)
+        middleRightLegLink2.addChild(middleRightLegLink3)
+
+        body.addChild(lowerRightLegLink1)
+        lowerRightLegLink1.addChild(lowerRightLegLink2)
+        lowerRightLegLink2.addChild(lowerRightLegLink3)
+
+        self.components = [
+            body,
+            face,
+            eye1,
+            eye2,
+            pupil1,
+            pupil2,
+            tooth1,
+            tooth2,
+            tailPart1,
+            tailPart2,
+            upperLeftLegLink1,
+            upperLeftLegLink2,
+            upperLeftLegLink3,
+            middleLeftLegLink1,
+            middleLeftLegLink2,
+            middleLeftLegLink3,
+            lowerLeftLegLink1,
+            lowerLeftLegLink2,
+            lowerLeftLegLink3,
+            upperRightLegLink1,
+            upperRightLegLink2,
+            upperRightLegLink3,
+            middleRightLegLink1,
+            middleRightLegLink2,
+            middleRightLegLink3,
+            lowerRightLegLink1,
+            lowerRightLegLink2,
+            lowerRightLegLink3,
+        ]
+
+        face.setRotateExtent(face.uAxis, -30, 30)
+        face.setRotateExtent(face.vAxis, -30, 30)
+        face.setRotateExtent(face.wAxis, -30, 30)
+
+        eye1.setRotateExtent(eye1.uAxis, -30, 30)
+        eye1.setRotateExtent(eye1.vAxis, -30, 30)
+        eye1.setRotateExtent(eye1.wAxis, -30, 30)
+
+        eye2.setRotateExtent(eye2.uAxis, -30, 30)
+        eye2.setRotateExtent(eye2.vAxis, -30, 30)
+        eye2.setRotateExtent(eye2.wAxis, -30, 30)
+
+        pupil1.setRotateExtent(pupil1.uAxis, -30, 30)
+        pupil1.setRotateExtent(pupil1.vAxis, -30, 30)
+        pupil1.setRotateExtent(pupil1.wAxis, -30, 30)
+
+        pupil2.setRotateExtent(pupil2.uAxis, -30, 30)
+        pupil2.setRotateExtent(pupil2.vAxis, -30, 30)
+        pupil2.setRotateExtent(pupil2.wAxis, -30, 30)
+
+        tooth1.setRotateExtent(tooth1.uAxis, -5, 30)
+        tooth1.setRotateExtent(tooth1.vAxis, -20, 10)
+        tooth1.setRotateExtent(tooth1.wAxis, -15, 15)
+
+        tooth2.setRotateExtent(tooth2.uAxis, -5, 30)
+        tooth2.setRotateExtent(tooth2.vAxis, -10, 20)
+        tooth2.setRotateExtent(tooth2.wAxis, -15, 15)
+
+        upperLeftLegLink1.setRotateExtent(upperLeftLegLink1.uAxis, -60, 60)
+        upperLeftLegLink1.setRotateExtent(upperLeftLegLink1.vAxis, 50, 100)
+        upperLeftLegLink1.setRotateExtent(upperLeftLegLink1.wAxis, -40, 60)
+
+        upperLeftLegLink2.setRotateExtent(upperLeftLegLink2.uAxis, -30, 30)
+        upperLeftLegLink2.setRotateExtent(upperLeftLegLink2.vAxis, -30, 30)
+        upperLeftLegLink2.setRotateExtent(upperLeftLegLink2.wAxis, -30, 30)
+
+        upperLeftLegLink3.setRotateExtent(upperLeftLegLink3.uAxis, -30, 30)
+        upperLeftLegLink3.setRotateExtent(upperLeftLegLink3.vAxis, -30, 30)
+        upperLeftLegLink3.setRotateExtent(upperLeftLegLink3.wAxis, -30, 30)
+
+        upperRightLegLink1.setRotateExtent(upperRightLegLink1.uAxis, 120, 240)
+        upperRightLegLink1.setRotateExtent(upperRightLegLink1.vAxis, 230, 280)
+        upperRightLegLink1.setRotateExtent(upperRightLegLink1.wAxis, 140, 240)
+
+        middleLeftLegLink1.setRotateExtent(middleLeftLegLink1.uAxis, -60, 60)
+        middleLeftLegLink1.setRotateExtent(middleLeftLegLink1.vAxis, 50, 100)
+        middleLeftLegLink1.setRotateExtent(middleLeftLegLink1.wAxis, -40, 60)
+
+        lowerLeftLegLink1.setRotateExtent(lowerLeftLegLink1.uAxis, -60, 60)
+        lowerLeftLegLink1.setRotateExtent(lowerLeftLegLink1.vAxis, 50, 100)
+        lowerLeftLegLink1.setRotateExtent(lowerLeftLegLink1.wAxis, -40, 60)
+
+        middleRightLegLink1.setRotateExtent(middleRightLegLink1.uAxis, 120, 240)
+        middleRightLegLink1.setRotateExtent(middleRightLegLink1.vAxis, 230, 280)
+        middleRightLegLink1.setRotateExtent(middleRightLegLink1.wAxis, 140, 240)
+
+        lowerRightLegLink1.setRotateExtent(lowerRightLegLink1.uAxis, 120, 240)
+        lowerRightLegLink1.setRotateExtent(lowerRightLegLink1.vAxis, 230, 280)
+        lowerRightLegLink1.setRotateExtent(lowerRightLegLink1.wAxis, 140, 240)
+
+        tailPart1.setRotateExtent(tailPart1.uAxis, -30, 30)
+        tailPart1.setRotateExtent(tailPart1.vAxis, -30, 30)
+        tailPart1.setRotateExtent(tailPart1.wAxis, -30, 30)
 
 
+class ModelDragonfly(Component):
+    """
+    Define our linkage model
+    """
+
+    components: list[Component] | None = None
+    contextParent: object | None = None
+
+    def __init__(self, parent: object, position: Point, shaderProg: object,
+                 linkageLength: float = 0.5,
+                 display_obj: Displayable | None = None) -> None:
+        super().__init__(position, display_obj)
+        self.components = []
+        self.contextParent = parent
+        
+        body = Sphere(Point(0,0,0), shaderProg, [1, 0.2333, 0.3333], Ct.GREEN)
+        self.addChild(body)
+        self.components = [body]
