@@ -15,7 +15,9 @@ from Component import Component
 from Displayable import Displayable
 from Shapes import Cube, Cone, Sphere, Cylinder
 from Point import Point
+from Quaternion import Quaternion
 import ColorType as Ct
+import math
 from EnvironmentObject import EnvironmentObject
 
 try:
@@ -72,13 +74,16 @@ class Linkage(Component, EnvironmentObject):
     def __init__(self, parent: object, position: Point, shaderProg: object) -> None:
         super(Linkage, self).__init__(position)
 
-        spider = ModelSpider(parent, Point(1,1,1), shaderProg, 0.1)
-        self.addChild(spider)
+        # spider = ModelSpider(parent, Point(1,1,1), shaderProg, 0.1)
+        # self.addChild(spider)
 
         dragonfly = ModelDragonfly(parent, Point(0,0,0), shaderProg, 0.1)
         self.addChild(dragonfly)
-        self.components = spider.components | dragonfly.components
+        # self.components = spider.components | dragonfly.components
+        self.components = dragonfly.components
         self.rotation_speed = [9, 3, -3]
+        self.direction = Point([random.random()-0.5 for _ in range(3)]).normalize() 
+        self.step_size = 0.01
 
 
         
@@ -102,24 +107,24 @@ class Linkage(Component, EnvironmentObject):
         # self.update()
         
         iterableComponentsFly = ["wing1", "wing2", "wing3", "wing4"]
-        iterableComponentsSpider1 = ["upperLeftLegLink1", "lowerLeftLegLink1", "upperRightLegLink1", "lowerRightLegLink1"]
-        iterableComponentsSpider2 = ["middleLeftLegLink1", "middleRightLegLink1"]
+        # iterableComponentsSpider1 = ["upperLeftLegLink1", "lowerLeftLegLink1", "upperRightLegLink1", "lowerRightLegLink1"]
+        # iterableComponentsSpider2 = ["middleLeftLegLink1", "middleRightLegLink1"]
         for str, comp in self.components.items():
             if str in iterableComponentsFly:
                 newAngle = comp.wAngle + self.rotation_speed[0]
                 if newAngle < comp.wRange[0] or newAngle > comp.wRange[1]:
                     self.rotation_speed[0] *= -1
                 comp.rotate(self.rotation_speed[0], comp.wAxis)
-            elif str in iterableComponentsSpider1:
-                newAngle = comp.vAngle + self.rotation_speed[1]
-                if newAngle < comp.vRange[0] or newAngle > comp.vRange[1]:
-                    self.rotation_speed[1] *= -1
-                comp.rotate(self.rotation_speed[1], comp.vAxis)
-            elif str in iterableComponentsSpider2:
-                newAngle = comp.vAngle + self.rotation_speed[2]
-                if newAngle < comp.vRange[0] or newAngle > comp.vRange[1]:
-                    self.rotation_speed[2] *= -1
-                comp.rotate(self.rotation_speed[2], comp.vAxis)
+            # elif str in iterableComponentsSpider1:
+            #     newAngle = comp.vAngle + self.rotation_speed[1]
+            #     if newAngle < comp.vRange[0] or newAngle > comp.vRange[1]:
+            #         self.rotation_speed[1] *= -1
+            #     comp.rotate(self.rotation_speed[1], comp.vAxis)
+            # elif str in iterableComponentsSpider2:
+            #     newAngle = comp.vAngle + self.rotation_speed[2]
+            #     if newAngle < comp.vRange[0] or newAngle > comp.vRange[1]:
+            #         self.rotation_speed[2] *= -1
+            #     comp.rotate(self.rotation_speed[2], comp.vAxis)
 
         self.update()
         # pass
@@ -141,6 +146,8 @@ class Linkage(Component, EnvironmentObject):
         #   4. Before implementing TODO 4, you can test this by initializing each creature with a random "target"
         #   direction and having it move continuously in that direction until a collision occurs.
 
+
+
         ##### TODO 4: "Hunting" simulation with potentials and creature collision
         # Requirements:
         #   1. Your creatures should have a prey/predator relationship. For example, you could have a bug being chased
@@ -159,6 +166,22 @@ class Linkage(Component, EnvironmentObject):
         #       tank walls.
         #   We recommend modularizing shared functions (bouncing two creatures off each other, checking the tank
         #   walls, etc.) within the EnvironmentObject class so that all creatures can inherit them.
+        d_start = Point(1, 0, 0)
+        d_end = self.direction
+        cross_product = d_start.cross3d(d_end).normalize()
+        dot_product = d_start.dot(d_end)
+        theta = math.acos(dot_product)
+        transform = Quaternion(
+            math.cos(theta / 2),
+            cross_product[0] * math.sin(theta / 2),
+            cross_product[1] * math.sin(theta / 2),
+            cross_product[2] * math.sin(theta / 2)
+        ).toMatrix()
+        newPos = self.currentPos + self.step_size * self.direction
+        
+        self.setCurrentPosition(newPos)
+        self.setPreRotation(transform)
+        self.update()
 
         ##### TODO 5: Creature orientation
         # Requirements:
@@ -181,7 +204,7 @@ class Linkage(Component, EnvironmentObject):
 
         # Access the Vivarium and its attributes as self.vivarium
 
-        pass
+        # pass
 
         
 class ModelSpider(Component):
@@ -448,7 +471,6 @@ class ModelDragonfly(Component):
         wing4.rotate(-80, self.vAxis)
         wing2.setDefaultW([0, 0, -1])
         wing4.setDefaultW([0, 0, -1])
-        
 
         wing1.setRotateExtent(wing1.wAxis, -30, 30)
         wing2.setRotateExtent(wing2.wAxis, -30, 30)
