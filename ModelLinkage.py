@@ -72,13 +72,14 @@ class Linkage(Component, EnvironmentObject):
     def __init__(self, parent: object, position: Point, shaderProg: object) -> None:
         super(Linkage, self).__init__(position)
 
-        # spider = ModelSpider(parent, Point(0,0,0), shaderProg, 0.1)
-        # self.components = spider.components
-        # self.addChild(spider)
-        # self.rotation_speed = 2
+        spider = ModelSpider(parent, Point(1,1,1), shaderProg, 0.1)
+        self.addChild(spider)
 
         dragonfly = ModelDragonfly(parent, Point(0,0,0), shaderProg, 0.1)
         self.addChild(dragonfly)
+        self.components = spider.components | dragonfly.components
+        self.rotation_speed = [9, 3, -3]
+
 
         
         
@@ -99,7 +100,29 @@ class Linkage(Component, EnvironmentObject):
         #         comp.rotate(self.rotation_speed, comp.vAxis)
 
         # self.update()
-        pass
+        
+        iterableComponentsFly = ["wing1", "wing2", "wing3", "wing4"]
+        iterableComponentsSpider1 = ["upperLeftLegLink1", "lowerLeftLegLink1", "upperRightLegLink1", "lowerRightLegLink1"]
+        iterableComponentsSpider2 = ["middleLeftLegLink1", "middleRightLegLink1"]
+        for str, comp in self.components.items():
+            if str in iterableComponentsFly:
+                newAngle = comp.wAngle + self.rotation_speed[0]
+                if newAngle < comp.wRange[0] or newAngle > comp.wRange[1]:
+                    self.rotation_speed[0] *= -1
+                comp.rotate(self.rotation_speed[0], comp.wAxis)
+            elif str in iterableComponentsSpider1:
+                newAngle = comp.vAngle + self.rotation_speed[1]
+                if newAngle < comp.vRange[0] or newAngle > comp.vRange[1]:
+                    self.rotation_speed[1] *= -1
+                comp.rotate(self.rotation_speed[1], comp.vAxis)
+            elif str in iterableComponentsSpider2:
+                newAngle = comp.vAngle + self.rotation_speed[2]
+                if newAngle < comp.vRange[0] or newAngle > comp.vRange[1]:
+                    self.rotation_speed[2] *= -1
+                comp.rotate(self.rotation_speed[2], comp.vAxis)
+
+        self.update()
+        # pass
 
 
 
@@ -175,48 +198,51 @@ class ModelSpider(Component):
         super().__init__(position, display_obj)
         self.components = []
         self.contextParent = parent
-        body = Sphere(Point(0,0,0), shaderProg, [0.2333, 0.2333, 0.3333], Ct.GREEN)
 
-        face = Sphere(Point(0, +1e-4, 0.4), shaderProg, [0.2, 0.15, 0.1667], Ct.DARKGREEN)
+        body = Sphere(Point(0,0,0), shaderProg, [0.3033, 0.3033, 0.4333], Ct.GREEN)
 
-        eye1 = Sphere(Point(-0.0833, 1e-4, 0.15), shaderProg, [0.0333, 0.0333, 0.0333], Ct.BLACK)
+        face = Sphere(Point(0, 0.00013, 0.52), shaderProg, [0.26, 0.195, 0.2167], Ct.DARKGREEN)
 
-        eye2 = Sphere(Point(0.0833, 1e-4, 0.15), shaderProg, [0.0333, 0.0333, 0.0333], Ct.BLACK)
+        eye1 = Sphere(Point(-0.1083, 0.00013, 0.195), shaderProg, [0.0433, 0.0433, 0.0433], Ct.BLACK)
 
-        pupil1 = Sphere(Point(0.0133, 1e-4, 0.0267), shaderProg, [0.01, 0.01, 0.01], Ct.WHITE)
+        eye2 = Sphere(Point(0.1083, 0.00013, 0.195), shaderProg, [0.0433, 0.0433, 0.0433], Ct.BLACK)
 
-        pupil2 = Sphere(Point(0.0133, 1e-4, 0.0267), shaderProg, [0.01, 0.01, 0.01], Ct.WHITE)
+        pupil1 = Sphere(Point(0.0173, 0.00013, 0.0347), shaderProg, [0.013, 0.013, 0.013], Ct.WHITE)
 
-        tooth1 = Cone(Point(-0.0833, -0.0667, 0.1667), shaderProg, [0.01, 0.0333, 0.0667], Ct.RED)
+        pupil2 = Sphere(Point(0.0173, 0.00013, 0.0347), shaderProg, [0.013, 0.013, 0.013], Ct.WHITE)
 
-        tooth2 = Cone(Point(0.0833, -0.0667, 0.1667), shaderProg, [0.01, 0.0333, 0.0667], Ct.RED)
+        tooth1 = Cone(Point(-0.1083, -0.0867, 0.2167), shaderProg, [0.013, 0.0433, 0.0867], Ct.RED)
 
-        tailPart1 = Sphere(Point(0, 0.05, -0.3233), shaderProg, [-0.0667, -0.0667, -0.0667], Ct.CYAN)
-        tailPart2 = Cone(Point(0, 0.0333, 0.2333), shaderProg, [0.05, 0.05, 0.2667], Ct.BLUE)
+        tooth2 = Cone(Point(0.1083, -0.0867, 0.2167), shaderProg, [0.013, 0.0433, 0.0867], Ct.RED)
 
-        upperLeftLegLink1 = Cylinder(Point(0.1667, 0, 0.2667), shaderProg, [0.0433, 0.0433, 0.1333], Ct.YELLOW)
-        upperLeftLegLink2 = Cylinder(Point(0, 0, 0.21), shaderProg, [0.0433, 0.0433, 0.1167], Ct.BLUE)
-        upperLeftLegLink3 = Cylinder(Point(0, 0, 0.1233), shaderProg, [0.0433, 0.0433, 0.0333], Ct.YELLOW)
+        tailPart1 = Sphere(Point(0, 0.065, -0.4203), shaderProg, [-0.0867, -0.0867, -0.0867], Ct.CYAN)
 
-        middleLeftLegLink1 = Cylinder(Point(0.1667, 0, 0.1), shaderProg, [0.0433, 0.0433, 0.1333], Ct.YELLOW)
-        middleLeftLegLink2 = Cylinder(Point(0, 0, 0.21), shaderProg, [0.0433, 0.0433, 0.1167], Ct.BLUE)
-        middleLeftLegLink3 = Cylinder(Point(0, 0, 0.1233), shaderProg, [0.0433, 0.0433, 0.0333], Ct.YELLOW)
+        tailPart2 = Cone(Point(0, 0.0433, 0.3033), shaderProg, [0.065, 0.065, 0.3467], Ct.BLUE)
 
-        lowerLeftLegLink1 = Cylinder(Point(0.1, 0, -0.0667), shaderProg, [0.0433, 0.0433, 0.1333], Ct.YELLOW)
-        lowerLeftLegLink2 = Cylinder(Point(0, 0, 0.21), shaderProg, [0.0433, 0.0433, 0.1167], Ct.BLUE)
-        lowerLeftLegLink3 = Cylinder(Point(0, 0, 0.1233), shaderProg, [0.0433, 0.0433, 0.0333], Ct.YELLOW)
+        upperLeftLegLink1 = Cylinder(Point(0.2167, 0, 0.3467), shaderProg, [0.0563, 0.0563, 0.1733], Ct.YELLOW)
+        upperLeftLegLink2 = Cylinder(Point(0, 0, 0.273), shaderProg, [0.0563, 0.0563, 0.1517], Ct.BLUE)
+        upperLeftLegLink3 = Cylinder(Point(0, 0, 0.1603), shaderProg, [0.0563, 0.0563, 0.0433], Ct.YELLOW)
 
-        upperRightLegLink1 = Cylinder(Point(-0.1667, 0, 0.2667), shaderProg, [0.0433, 0.0433, 0.1333], Ct.YELLOW)
-        upperRightLegLink2 = Cylinder(Point(0, 0, 0.21), shaderProg, [0.0433, 0.0433, 0.1167], Ct.BLUE)
-        upperRightLegLink3 = Cylinder(Point(0, 0, 0.1233), shaderProg, [0.0433, 0.0433, 0.0333], Ct.YELLOW)
+        middleLeftLegLink1 = Cylinder(Point(0.2167, 0, 0.13), shaderProg, [0.0563, 0.0563, 0.1733], Ct.YELLOW)
+        middleLeftLegLink2 = Cylinder(Point(0, 0, 0.273), shaderProg, [0.0563, 0.0563, 0.1517], Ct.BLUE)
+        middleLeftLegLink3 = Cylinder(Point(0, 0, 0.1603), shaderProg, [0.0563, 0.0563, 0.0433], Ct.YELLOW)
 
-        middleRightLegLink1 = Cylinder(Point(-0.1667, 0, 0.1), shaderProg, [0.0433, 0.0433, 0.1333], Ct.YELLOW)
-        middleRightLegLink2 = Cylinder(Point(0, 0, 0.21), shaderProg, [0.0433, 0.0433, 0.1167], Ct.BLUE)
-        middleRightLegLink3 = Cylinder(Point(0, 0, 0.1233), shaderProg, [0.0433, 0.0433, 0.0333], Ct.YELLOW)
+        lowerLeftLegLink1 = Cylinder(Point(0.13, 0, -0.0867), shaderProg, [0.0563, 0.0563, 0.1733], Ct.YELLOW)
+        lowerLeftLegLink2 = Cylinder(Point(0, 0, 0.273), shaderProg, [0.0563, 0.0563, 0.1517], Ct.BLUE)
+        lowerLeftLegLink3 = Cylinder(Point(0, 0, 0.1603), shaderProg, [0.0563, 0.0563, 0.0433], Ct.YELLOW)
 
-        lowerRightLegLink1 = Cylinder(Point(-0.1, 0, -0.0667), shaderProg, [0.0433, 0.0433, 0.1333], Ct.YELLOW)
-        lowerRightLegLink2 = Cylinder(Point(0, 0, 0.21), shaderProg, [0.0433, 0.0433, 0.1167], Ct.BLUE)
-        lowerRightLegLink3 = Cylinder(Point(0, 0, 0.1233), shaderProg, [0.0433, 0.0433, 0.0333], Ct.YELLOW)
+        upperRightLegLink1 = Cylinder(Point(-0.2167, 0, 0.3467), shaderProg, [0.0563, 0.0563, 0.1733], Ct.YELLOW)
+        upperRightLegLink2 = Cylinder(Point(0, 0, 0.273), shaderProg, [0.0563, 0.0563, 0.1517], Ct.BLUE)
+        upperRightLegLink3 = Cylinder(Point(0, 0, 0.1603), shaderProg, [0.0563, 0.0563, 0.0433], Ct.YELLOW)
+
+        middleRightLegLink1 = Cylinder(Point(-0.2167, 0, 0.13), shaderProg, [0.0563, 0.0563, 0.1733], Ct.YELLOW)
+        middleRightLegLink2 = Cylinder(Point(0, 0, 0.273), shaderProg, [0.0563, 0.0563, 0.1517], Ct.BLUE)
+        middleRightLegLink3 = Cylinder(Point(0, 0, 0.1603), shaderProg, [0.0563, 0.0563, 0.0433], Ct.YELLOW)
+
+        lowerRightLegLink1 = Cylinder(Point(-0.13, 0, -0.0867), shaderProg, [0.0563, 0.0563, 0.1733], Ct.YELLOW)
+        lowerRightLegLink2 = Cylinder(Point(0, 0, 0.273), shaderProg, [0.0563, 0.0563, 0.1517], Ct.BLUE)
+        lowerRightLegLink3 = Cylinder(Point(0, 0, 0.1603), shaderProg, [0.0563, 0.0563, 0.0433], Ct.YELLOW)
+
 
         tooth1.rotate(30, self.uAxis)
         tooth1.rotate(-20, self.vAxis)
@@ -360,6 +386,7 @@ class ModelSpider(Component):
         lowerRightLegLink1.setRotateExtent(lowerRightLegLink1.vAxis, 230, 280)
 
 
+
 class ModelDragonfly(Component):
     """
     Define our linkage model
@@ -378,30 +405,23 @@ class ModelDragonfly(Component):
         # body = Sphere(Point(0,0,0), shaderProg, [1, 0.2333, 0.3333], Ct.GREEN)
         # face = Sphere(Point(0, +1e-4, 0.4), shaderProg, [0.2, 0.15, 0.1667], Ct.DARKGREEN)
 
-        body = Sphere(Point(0,0,0), shaderProg, [0.2333, 0.2333, 0.7], Ct.GREEN)
+        body = Sphere(Point(0, 0, 0), shaderProg, [0.11665, 0.11665, 0.35], Ct.GREEN)
 
-        face = Sphere(Point(0, +1e-4, 0.8), shaderProg, [0.2, 0.2, 0.2], Ct.DARKGREEN)
+        face = Sphere(Point(0, 0.00005, 0.4), shaderProg, [0.125, 0.1, 0.125], Ct.DARKGREEN)
 
-        wing1 = Sphere(Point(-0.6, 0.2, 0.3), shaderProg, [0.7, 0.05, 0.2], Ct.RED)
+        wing1 = Sphere(Point(-0.05, 0.1, 0.45), shaderProg, [0.1, 0.025, 0.35], Ct.RED)
 
-        wing2 = Sphere(Point(0.6, 0.2, 0.3), shaderProg, [0.7, 0.05, 0.2], Ct.RED)
+        wing2 = Sphere(Point(0.05, 0.1, 0.45), shaderProg, [0.1, 0.025, 0.35], Ct.RED)
 
-        wing3 = Sphere(Point(-0.6, 0.2, -0.1), shaderProg, [0.7, 0.05, 0.2], Ct.RED)
+        wing3 = Sphere(Point(-0.05, 0.1, 0.275), shaderProg, [0.1, 0.025, 0.35], Ct.RED)
 
-        wing4 = Sphere(Point(0.6, 0.2, -0.1), shaderProg, [0.7, 0.05, 0.2], Ct.RED)
+        wing4 = Sphere(Point(0.05, 0.1, 0.275), shaderProg, [0.1, 0.025, 0.35], Ct.RED)
 
-        tail = Sphere(Point(0,0,-0.5), shaderProg, [0.1, 0.1, 1], Ct.RED)
+        tail = Sphere(Point(0, 0, -0.25), shaderProg, [0.05, 0.05, 0.5], Ct.RED)
 
-        eye1 = Sphere(Point(0, 0, 0))
+        eye1 = Sphere(Point(0.075, 0.025, 0), shaderProg, [0.075, 0.05, 0.075], Ct.BLUE)
 
-
-        wing1.rotate(15, self.vAxis)
-        wing2.rotate(-15, self.vAxis)
-        wing3.rotate(10, self.vAxis)
-        wing4.rotate(-10, self.vAxis)
-
-        
-
+        eye2 = Sphere(Point(-0.075, 0.025, 0), shaderProg, [0.075, 0.05, 0.075], Ct.BLUE)
 
         self.addChild(body)
         body.addChild(face)
@@ -410,9 +430,27 @@ class ModelDragonfly(Component):
         body.addChild(wing3)
         body.addChild(wing4)
         body.addChild(tail)
+        face.addChild(eye1)
+        face.addChild(eye2)
         self.components = {
             "body": body,
             "face": face,
             "wing1": wing1,
-            "wing2": wing2
+            "wing2": wing2,
+            "wing3": wing3,
+            "wing4": wing4,
+            "eye1": eye1,
+            "eye2": eye2
             }
+        wing1.rotate(75, self.vAxis)
+        wing2.rotate(-75, self.vAxis)
+        wing3.rotate(80, self.vAxis)
+        wing4.rotate(-80, self.vAxis)
+        wing2.setDefaultW([0, 0, -1])
+        wing4.setDefaultW([0, 0, -1])
+        
+
+        wing1.setRotateExtent(wing1.wAxis, -30, 30)
+        wing2.setRotateExtent(wing2.wAxis, -30, 30)
+        wing3.setRotateExtent(wing3.wAxis, -30, 30)
+        wing4.setRotateExtent(wing4.wAxis, -30, 30)
