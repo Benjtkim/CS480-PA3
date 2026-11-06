@@ -166,7 +166,7 @@ class Linkage(Component, EnvironmentObject):
         #       tank walls.
         #   We recommend modularizing shared functions (bouncing two creatures off each other, checking the tank
         #   walls, etc.) within the EnvironmentObject class so that all creatures can inherit them.
-        d_start = Point(1, 0, 0)
+        d_start = Point(0, 0, 1)
         d_end = self.direction
         cross_product = d_start.cross3d(d_end).normalize()
         dot_product = d_start.dot(d_end)
