@@ -69,24 +69,20 @@ class Linkage(Component, EnvironmentObject):
     """
     components: dict[str, Component] | None = None
     rotation_speed: list[list[float]] | None = None
-    translation_speed: Point | None = None
 
     def __init__(self, parent: object, position: Point, shaderProg: object) -> None:
         super(Linkage, self).__init__(position)
 
-        # spider = ModelSpider(parent, Point(1,1,1), shaderProg, 0.1)
-        # self.addChild(spider)
+        self.spider = ModelSpider(parent, Point(1,1,1), shaderProg, 0.1)
+        self.addChild(self.spider)
 
-        dragonfly = ModelDragonfly(parent, Point(0,0,0), shaderProg, 0.1)
-        self.addChild(dragonfly)
-        # self.components = spider.components | dragonfly.components
-        self.components = dragonfly.components
+        self.dragonfly = ModelDragonfly(parent, Point(0,0,0), shaderProg, 0.1)
+        self.addChild(self.dragonfly)
+        self.components = self.spider.components | self.dragonfly.components
+        # self.components = dragonfly.components
         self.rotation_speed = [9, 3, -3]
-        self.direction = Point([random.random()-0.5 for _ in range(3)]).normalize() 
-        self.step_size = 0.01
-
-
-        
+        self.direction = [Point([random.random()-0.5 for _ in range(3)]).normalize(), Point([random.random()-0.5 for _ in range(3)]).normalize()] 
+        self.step_size = 0.02
         
 
     def animationUpdate(self) -> None:
@@ -95,39 +91,28 @@ class Linkage(Component, EnvironmentObject):
         #   1. Set reasonable joint limits for your creature to avoid self-intersections.
         #   2. The linkages should move back and forth in a periodic motion, as the creatures move about the vivarium.
         #   For example, a bird flaps its wings, a fish wiggles its fin(s), a terrestrial creature moves its legs.
-
-        # iterableComponents = ["upperLeftLegLink1", "middleLeftLegLink1", "lowerLeftLegLink1", "upperRightLegLink1", "middleRightLegLink1", "lowerRightLegLink1"]
-        # for str, comp in self.components.items():
-        #     if str in iterableComponents:
-        #         newAngle = comp.vAngle + self.rotation_speed
-        #         if newAngle < comp.vRange[0] or newAngle > comp.vRange[1]:
-        #             self.rotation_speed *= -1
-        #         comp.rotate(self.rotation_speed, comp.vAxis)
-
-        # self.update()
         
         iterableComponentsFly = ["wing1", "wing2", "wing3", "wing4"]
-        # iterableComponentsSpider1 = ["upperLeftLegLink1", "lowerLeftLegLink1", "upperRightLegLink1", "lowerRightLegLink1"]
-        # iterableComponentsSpider2 = ["middleLeftLegLink1", "middleRightLegLink1"]
+        iterableComponentsSpider1 = ["upperLeftLegLink1", "lowerLeftLegLink1", "upperRightLegLink1", "lowerRightLegLink1"]
+        iterableComponentsSpider2 = ["middleLeftLegLink1", "middleRightLegLink1"]
         for str, comp in self.components.items():
             if str in iterableComponentsFly:
                 newAngle = comp.wAngle + self.rotation_speed[0]
                 if newAngle < comp.wRange[0] or newAngle > comp.wRange[1]:
                     self.rotation_speed[0] *= -1
                 comp.rotate(self.rotation_speed[0], comp.wAxis)
-            # elif str in iterableComponentsSpider1:
-            #     newAngle = comp.vAngle + self.rotation_speed[1]
-            #     if newAngle < comp.vRange[0] or newAngle > comp.vRange[1]:
-            #         self.rotation_speed[1] *= -1
-            #     comp.rotate(self.rotation_speed[1], comp.vAxis)
-            # elif str in iterableComponentsSpider2:
-            #     newAngle = comp.vAngle + self.rotation_speed[2]
-            #     if newAngle < comp.vRange[0] or newAngle > comp.vRange[1]:
-            #         self.rotation_speed[2] *= -1
-            #     comp.rotate(self.rotation_speed[2], comp.vAxis)
+            elif str in iterableComponentsSpider1:
+                newAngle = comp.vAngle + self.rotation_speed[1]
+                if newAngle < comp.vRange[0] or newAngle > comp.vRange[1]:
+                    self.rotation_speed[1] *= -1
+                comp.rotate(self.rotation_speed[1], comp.vAxis)
+            elif str in iterableComponentsSpider2:
+                newAngle = comp.vAngle + self.rotation_speed[2]
+                if newAngle < comp.vRange[0] or newAngle > comp.vRange[1]:
+                    self.rotation_speed[2] *= -1
+                comp.rotate(self.rotation_speed[2], comp.vAxis)
 
         self.update()
-        # pass
 
 
 
@@ -166,22 +151,8 @@ class Linkage(Component, EnvironmentObject):
         #       tank walls.
         #   We recommend modularizing shared functions (bouncing two creatures off each other, checking the tank
         #   walls, etc.) within the EnvironmentObject class so that all creatures can inherit them.
-        d_start = Point(0, 0, 1)
-        d_end = self.direction
-        cross_product = d_start.cross3d(d_end).normalize()
-        dot_product = d_start.dot(d_end)
-        theta = math.acos(dot_product)
-        transform = Quaternion(
-            math.cos(theta / 2),
-            cross_product[0] * math.sin(theta / 2),
-            cross_product[1] * math.sin(theta / 2),
-            cross_product[2] * math.sin(theta / 2)
-        ).toMatrix()
-        newPos = self.currentPos + self.step_size * self.direction
+
         
-        self.setCurrentPosition(newPos)
-        self.setPreRotation(transform)
-        self.update()
 
         ##### TODO 5: Creature orientation
         # Requirements:
@@ -202,11 +173,116 @@ class Linkage(Component, EnvironmentObject):
         #   [Boids animation algorithms](http://www.red3d.com/cwr/boids/) of Craig Reynolds.
         #   2. Your in-person demo should make the flocking behavior very obvious/easy to see in order to receive credit.
 
-        # Access the Vivarium and its attributes as self.vivarium
+        d_start = Point(0, 0, 1)
 
+        d_end_dragonfly = self.direction[0]
+        cross_product_dragonfly = d_start.cross3d(d_end_dragonfly).normalize()
+        dot_product_dragonfly = d_start.dot(d_end_dragonfly)
+        theta_dragonfly = math.acos(dot_product_dragonfly)
+
+        d_end_spider = self.direction[1]
+        cross_product_spider = d_start.cross3d(d_end_spider).normalize()
+        dot_product_spider = d_start.dot(d_end_spider)
+        theta_spider = math.acos(dot_product_spider)
+
+        newPos_dragonfly = self.dragonfly.currentPos + self.step_size * self.direction[0]
+        newPos_spider = self.spider.currentPos + self.step_size * self.direction[1]
+
+        print("self.direction[0]", self.direction[0])
+        print("self.direction[1]", self.direction[1])
+
+        transform_dragonfly = Quaternion(
+            math.cos(theta_dragonfly / 2),
+             cross_product_dragonfly[0] * math.sin(theta_dragonfly / 2),
+             cross_product_dragonfly[1] * math.sin(theta_dragonfly / 2),
+             cross_product_dragonfly[2] * math.sin(theta_dragonfly / 2)
+        ).toMatrix()
+
+        transform_spider = Quaternion(
+            math.cos(theta_spider / 2),
+             cross_product_spider[0] * math.sin(theta_spider / 2),
+             cross_product_spider[1] * math.sin(theta_spider / 2),
+             cross_product_spider[2] * math.sin(theta_spider / 2)
+        ).toMatrix()
+
+        self.spider.setCurrentPosition(newPos_spider)
+        self.spider.setPreRotation(transform_spider)
+
+        self.dragonfly.setCurrentPosition(newPos_dragonfly)
+        self.dragonfly.setPreRotation(transform_dragonfly)
+
+
+        # Access the Vivarium and its attributes as self.vivarium
+        self.update()
         # pass
 
+
+class ModelDragonfly(Component):
+    """
+    Define our linkage model
+    """
+
+    components: dict[str, Component] | None = None
+    contextParent: object | None = None
+
+    def __init__(self, parent: object, position: Point, shaderProg: object,
+                 linkageLength: float = 0.5,
+                 display_obj: Displayable | None = None) -> None:
+        super().__init__(position, display_obj)
+        self.contextParent = parent
         
+        # body = Sphere(Point(0,0,0), shaderProg, [1, 0.2333, 0.3333], Ct.GREEN)
+        # face = Sphere(Point(0, +1e-4, 0.4), shaderProg, [0.2, 0.15, 0.1667], Ct.DARKGREEN)
+
+        body = Sphere(Point(0, 0, 0), shaderProg, [0.11665, 0.11665, 0.35], Ct.GREEN)
+
+        face = Sphere(Point(0, 0.00005, 0.4), shaderProg, [0.125, 0.1, 0.125], Ct.DARKGREEN)
+
+        wing1 = Sphere(Point(-0.05, 0.1, 0.45), shaderProg, [0.1, 0.025, 0.35], Ct.RED)
+
+        wing2 = Sphere(Point(0.05, 0.1, 0.45), shaderProg, [0.1, 0.025, 0.35], Ct.RED)
+
+        wing3 = Sphere(Point(-0.05, 0.1, 0.275), shaderProg, [0.1, 0.025, 0.35], Ct.RED)
+
+        wing4 = Sphere(Point(0.05, 0.1, 0.275), shaderProg, [0.1, 0.025, 0.35], Ct.RED)
+
+        tail = Sphere(Point(0, 0, -0.25), shaderProg, [0.05, 0.05, 0.5], Ct.RED)
+
+        eye1 = Sphere(Point(0.075, 0.025, 0), shaderProg, [0.075, 0.05, 0.075], Ct.BLUE)
+
+        eye2 = Sphere(Point(-0.075, 0.025, 0), shaderProg, [0.075, 0.05, 0.075], Ct.BLUE)
+
+        self.addChild(body)
+        body.addChild(face)
+        body.addChild(wing1)
+        body.addChild(wing2)
+        body.addChild(wing3)
+        body.addChild(wing4)
+        body.addChild(tail)
+        face.addChild(eye1)
+        face.addChild(eye2)
+        self.components = {
+            "body": body,
+            "face": face,
+            "wing1": wing1,
+            "wing2": wing2,
+            "wing3": wing3,
+            "wing4": wing4,
+            "eye1": eye1,
+            "eye2": eye2
+            }
+        wing1.rotate(75, self.vAxis)
+        wing2.rotate(-75, self.vAxis)
+        wing3.rotate(80, self.vAxis)
+        wing4.rotate(-80, self.vAxis)
+        wing2.setDefaultW([0, 0, -1])
+        wing4.setDefaultW([0, 0, -1])
+
+        wing1.setRotateExtent(wing1.wAxis, -30, 30)
+        wing2.setRotateExtent(wing2.wAxis, -30, 30)
+        wing3.setRotateExtent(wing3.wAxis, -30, 30)
+        wing4.setRotateExtent(wing4.wAxis, -30, 30)
+
 class ModelSpider(Component):
     """
     Define our linkage model
@@ -219,7 +295,6 @@ class ModelSpider(Component):
                  linkageLength: float = 0.5,
                  display_obj: Displayable | None = None) -> None:
         super().__init__(position, display_obj)
-        self.components = []
         self.contextParent = parent
 
         body = Sphere(Point(0,0,0), shaderProg, [0.3033, 0.3033, 0.4333], Ct.GREEN)
@@ -409,70 +484,3 @@ class ModelSpider(Component):
         lowerRightLegLink1.setRotateExtent(lowerRightLegLink1.vAxis, 230, 280)
 
 
-
-class ModelDragonfly(Component):
-    """
-    Define our linkage model
-    """
-
-    components: list[Component] | None = None
-    contextParent: object | None = None
-
-    def __init__(self, parent: object, position: Point, shaderProg: object,
-                 linkageLength: float = 0.5,
-                 display_obj: Displayable | None = None) -> None:
-        super().__init__(position, display_obj)
-        self.components = []
-        self.contextParent = parent
-        
-        # body = Sphere(Point(0,0,0), shaderProg, [1, 0.2333, 0.3333], Ct.GREEN)
-        # face = Sphere(Point(0, +1e-4, 0.4), shaderProg, [0.2, 0.15, 0.1667], Ct.DARKGREEN)
-
-        body = Sphere(Point(0, 0, 0), shaderProg, [0.11665, 0.11665, 0.35], Ct.GREEN)
-
-        face = Sphere(Point(0, 0.00005, 0.4), shaderProg, [0.125, 0.1, 0.125], Ct.DARKGREEN)
-
-        wing1 = Sphere(Point(-0.05, 0.1, 0.45), shaderProg, [0.1, 0.025, 0.35], Ct.RED)
-
-        wing2 = Sphere(Point(0.05, 0.1, 0.45), shaderProg, [0.1, 0.025, 0.35], Ct.RED)
-
-        wing3 = Sphere(Point(-0.05, 0.1, 0.275), shaderProg, [0.1, 0.025, 0.35], Ct.RED)
-
-        wing4 = Sphere(Point(0.05, 0.1, 0.275), shaderProg, [0.1, 0.025, 0.35], Ct.RED)
-
-        tail = Sphere(Point(0, 0, -0.25), shaderProg, [0.05, 0.05, 0.5], Ct.RED)
-
-        eye1 = Sphere(Point(0.075, 0.025, 0), shaderProg, [0.075, 0.05, 0.075], Ct.BLUE)
-
-        eye2 = Sphere(Point(-0.075, 0.025, 0), shaderProg, [0.075, 0.05, 0.075], Ct.BLUE)
-
-        self.addChild(body)
-        body.addChild(face)
-        body.addChild(wing1)
-        body.addChild(wing2)
-        body.addChild(wing3)
-        body.addChild(wing4)
-        body.addChild(tail)
-        face.addChild(eye1)
-        face.addChild(eye2)
-        self.components = {
-            "body": body,
-            "face": face,
-            "wing1": wing1,
-            "wing2": wing2,
-            "wing3": wing3,
-            "wing4": wing4,
-            "eye1": eye1,
-            "eye2": eye2
-            }
-        wing1.rotate(75, self.vAxis)
-        wing2.rotate(-75, self.vAxis)
-        wing3.rotate(80, self.vAxis)
-        wing4.rotate(-80, self.vAxis)
-        wing2.setDefaultW([0, 0, -1])
-        wing4.setDefaultW([0, 0, -1])
-
-        wing1.setRotateExtent(wing1.wAxis, -30, 30)
-        wing2.setRotateExtent(wing2.wAxis, -30, 30)
-        wing3.setRotateExtent(wing3.wAxis, -30, 30)
-        wing4.setRotateExtent(wing4.wAxis, -30, 30)
