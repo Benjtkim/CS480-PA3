@@ -73,12 +73,17 @@ class Linkage(Component, EnvironmentObject):
     def __init__(self, parent: object, position: Point, shaderProg: object) -> None:
         super(Linkage, self).__init__(position)
 
-        self.spider = ModelSpider(parent, Point(1,1,1), shaderProg, 0.1)
-        self.addChild(self.spider)
-
         self.dragonfly = ModelDragonfly(parent, Point(0,0,0), shaderProg, 0.1)
         self.addChild(self.dragonfly)
-        self.components = self.spider.components | self.dragonfly.components
+        self.dragonfly.bound_center = Point(0, 0, 0)
+        self.dragonfly.bound_radius = 0.2
+
+        self.spider = ModelSpider(parent, Point(1,1,1), shaderProg, 0.1)
+        self.addChild(self.spider)
+        self.spider.bound_center = Point(1, 1, 1)
+        self.spider.bound_radius = 0.4
+
+        self.components = self.dragonfly.components | self.spider.components 
         # self.components = dragonfly.components
         self.rotation_speed = [9, 3, -3]
         self.direction = [Point([random.random()-0.5 for _ in range(3)]).normalize(), Point([random.random()-0.5 for _ in range(3)]).normalize()] 
@@ -130,6 +135,8 @@ class Linkage(Component, EnvironmentObject):
         #   about a plane to decide the after-collision direction.
         #   4. Before implementing TODO 4, you can test this by initializing each creature with a random "target"
         #   direction and having it move continuously in that direction until a collision occurs.
+
+        
 
 
 
@@ -188,9 +195,6 @@ class Linkage(Component, EnvironmentObject):
         newPos_dragonfly = self.dragonfly.currentPos + self.step_size * self.direction[0]
         newPos_spider = self.spider.currentPos + self.step_size * self.direction[1]
 
-        print("self.direction[0]", self.direction[0])
-        print("self.direction[1]", self.direction[1])
-
         transform_dragonfly = Quaternion(
             math.cos(theta_dragonfly / 2),
              cross_product_dragonfly[0] * math.sin(theta_dragonfly / 2),
@@ -210,7 +214,6 @@ class Linkage(Component, EnvironmentObject):
 
         self.dragonfly.setCurrentPosition(newPos_dragonfly)
         self.dragonfly.setPreRotation(transform_dragonfly)
-
 
         # Access the Vivarium and its attributes as self.vivarium
         self.update()
