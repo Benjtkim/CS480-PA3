@@ -76,18 +76,18 @@ class Linkage(Component, EnvironmentObject):
         self.dragonfly = ModelDragonfly(parent, Point(0,0,0), shaderProg, 0.1)
         self.addChild(self.dragonfly)
         self.dragonfly.bound_center = Point(0, 0, 0)
-        self.dragonfly.bound_radius = 0.2
+        self.dragonfly.bound_radius = 0.7
 
-        self.spider = ModelSpider(parent, Point(1,1,1), shaderProg, 0.1)
+        self.spider = ModelSpider(parent, Point(3, 3, 3), shaderProg, 0.1)
         self.addChild(self.spider)
-        self.spider.bound_center = Point(1, 1, 1)
-        self.spider.bound_radius = 0.4
+        self.spider.bound_center = Point(3, 3, 3)
+        self.spider.bound_radius = 0.7
 
         self.components = self.dragonfly.components | self.spider.components 
         # self.components = dragonfly.components
         self.rotation_speed = [9, 3, -3]
         self.direction = [Point([random.random()-0.5 for _ in range(3)]).normalize(), Point([random.random()-0.5 for _ in range(3)]).normalize()] 
-        self.step_size = 0.02
+        self.step_size = 0.01
         
 
     def animationUpdate(self) -> None:
@@ -136,9 +136,6 @@ class Linkage(Component, EnvironmentObject):
         #   4. Before implementing TODO 4, you can test this by initializing each creature with a random "target"
         #   direction and having it move continuously in that direction until a collision occurs.
 
-        
-
-
 
         ##### TODO 4: "Hunting" simulation with potentials and creature collision
         # Requirements:
@@ -158,8 +155,6 @@ class Linkage(Component, EnvironmentObject):
         #       tank walls.
         #   We recommend modularizing shared functions (bouncing two creatures off each other, checking the tank
         #   walls, etc.) within the EnvironmentObject class so that all creatures can inherit them.
-
-        
 
         ##### TODO 5: Creature orientation
         # Requirements:
@@ -182,6 +177,40 @@ class Linkage(Component, EnvironmentObject):
 
         d_start = Point(0, 0, 1)
 
+        newPos_dragonfly = self.dragonfly.currentPos + self.step_size * self.direction[0]
+        newPos_spider = self.spider.currentPos + self.step_size * self.direction[1]
+
+        print(self.vivarium.tank_dimensions)
+
+        distance = newPos_dragonfly.distance(newPos_spider)
+        gradiantPred = 2 * (newPos_dragonfly - newPos_spider) * math.pow(math.e, -1 * (distance * distance))
+
+        newPos_spider = newPos_spider + gradiantPred
+
+        if ((newPos_dragonfly.x + self.dragonfly.bound_radius >= self.vivarium.tank_dimensions[0] / 2) or 
+            (newPos_dragonfly.x - self.dragonfly.bound_radius <= -self.vivarium.tank_dimensions[0] / 2)):
+            self.direction[0] = Point(-self.direction[0].x, self.direction[0].y, self.direction[0].z)
+        
+        if ((newPos_dragonfly.y + self.dragonfly.bound_radius >= self.vivarium.tank_dimensions[1] / 2) or 
+            (newPos_dragonfly.y - self.dragonfly.bound_radius <= -self.vivarium.tank_dimensions[1] / 2)):
+             self.direction[0] = Point(self.direction[0].x, -self.direction[0].y, self.direction[0].z)
+
+        if ((newPos_dragonfly.z + self.dragonfly.bound_radius >= self.vivarium.tank_dimensions[2] / 2) or 
+            (newPos_dragonfly.z - self.dragonfly.bound_radius <= -self.vivarium.tank_dimensions[2] / 2)):
+             self.direction[0] = Point(self.direction[0].x, self.direction[0].y, -self.direction[0].z)
+
+        if ((newPos_spider.x + self.spider.bound_radius >= self.vivarium.tank_dimensions[0] / 2) or 
+            (newPos_spider.x - self.spider.bound_radius <= -self.vivarium.tank_dimensions[0] / 2)):
+            self.direction[1] = Point(-self.direction[1].x, self.direction[1].y, self.direction[1].z)
+        
+        if ((newPos_spider.y + self.spider.bound_radius >= self.vivarium.tank_dimensions[1] / 2) or 
+            (newPos_spider.y - self.spider.bound_radius <= -self.vivarium.tank_dimensions[1] / 2)):
+             self.direction[1] = Point(self.direction[1].x, -self.direction[1].y, self.direction[1].z)
+
+        if ((newPos_spider.z + self.spider.bound_radius >= self.vivarium.tank_dimensions[2] / 2) or 
+            (newPos_spider.z - self.spider.bound_radius <= -self.vivarium.tank_dimensions[2] / 2)):
+             self.direction[1] = Point(self.direction[1].x, self.direction[1].y, -self.direction[1].z)
+
         d_end_dragonfly = self.direction[0]
         cross_product_dragonfly = d_start.cross3d(d_end_dragonfly).normalize()
         dot_product_dragonfly = d_start.dot(d_end_dragonfly)
@@ -191,9 +220,6 @@ class Linkage(Component, EnvironmentObject):
         cross_product_spider = d_start.cross3d(d_end_spider).normalize()
         dot_product_spider = d_start.dot(d_end_spider)
         theta_spider = math.acos(dot_product_spider)
-
-        newPos_dragonfly = self.dragonfly.currentPos + self.step_size * self.direction[0]
-        newPos_spider = self.spider.currentPos + self.step_size * self.direction[1]
 
         transform_dragonfly = Quaternion(
             math.cos(theta_dragonfly / 2),
