@@ -73,18 +73,17 @@ class Linkage(Component, EnvironmentObject):
     def __init__(self, parent: object, position: Point, shaderProg: object) -> None:
         super(Linkage, self).__init__(position)
 
-        self.dragonfly = ModelDragonfly(parent, Point(0,0,0), shaderProg, 0.1)
+        self.dragonflyEaten = False
+
+        self.dragonfly = ModelDragonfly(parent, Point(-1.2,-1.2,-1.2), shaderProg, 0.1)
         self.addChild(self.dragonfly)
-        self.dragonfly.bound_center = Point(0, 0, 0)
         self.dragonfly.bound_radius = 0.7
 
-        self.spider = ModelSpider(parent, Point(3, 3, 3), shaderProg, 0.1)
+        self.spider = ModelSpider(parent, Point(1.2, 1.2, 1.2), shaderProg, 0.1)
         self.addChild(self.spider)
-        self.spider.bound_center = Point(3, 3, 3)
-        self.spider.bound_radius = 0.7
+        self.spider.bound_radius = 0.65
 
         self.components = self.dragonfly.components | self.spider.components 
-        # self.components = dragonfly.components
         self.rotation_speed = [9, 3, -3]
         self.direction = [Point([random.random()-0.5 for _ in range(3)]).normalize(), Point([random.random()-0.5 for _ in range(3)]).normalize()] 
         self.step_size = 0.01
@@ -119,10 +118,6 @@ class Linkage(Component, EnvironmentObject):
 
         self.update()
 
-
-
-
-
     def stepForward(self, potentialsOn: bool) -> None:
 
         ##### TODO 3: Tank collision detection
@@ -135,7 +130,6 @@ class Linkage(Component, EnvironmentObject):
         #   about a plane to decide the after-collision direction.
         #   4. Before implementing TODO 4, you can test this by initializing each creature with a random "target"
         #   direction and having it move continuously in that direction until a collision occurs.
-
 
         ##### TODO 4: "Hunting" simulation with potentials and creature collision
         # Requirements:
@@ -175,17 +169,26 @@ class Linkage(Component, EnvironmentObject):
         #   [Boids animation algorithms](http://www.red3d.com/cwr/boids/) of Craig Reynolds.
         #   2. Your in-person demo should make the flocking behavior very obvious/easy to see in order to receive credit.
 
+        toDelete = []
+
         d_start = Point(0, 0, 1)
 
         newPos_dragonfly = self.dragonfly.currentPos + self.step_size * self.direction[0]
         newPos_spider = self.spider.currentPos + self.step_size * self.direction[1]
 
-        print(self.vivarium.tank_dimensions)
-
         distance = newPos_dragonfly.distance(newPos_spider)
-        gradiantPred = 2 * (newPos_dragonfly - newPos_spider) * math.pow(math.e, -1 * (distance * distance))
+        gradiantPred = (2 * (newPos_dragonfly - newPos_spider) * math.pow(math.e, -1 * (distance * distance))).normalize()
+        self.direction[1] = gradiantPred
 
-        newPos_spider = newPos_spider + gradiantPred
+        newPos_spider = self.spider.currentPos + self.step_size * self.direction[1]
+
+        radiiSum = self.dragonfly.bound_radius + self.spider.bound_radius
+
+        print(self.vivarium.toDelete)
+
+        if distance <= radiiSum and not self.dragonflyEaten:
+            self.vivarium.toDelete.append(self.dragonfly)
+            self.dragonflyEaten = True
 
         if ((newPos_dragonfly.x + self.dragonfly.bound_radius >= self.vivarium.tank_dimensions[0] / 2) or 
             (newPos_dragonfly.x - self.dragonfly.bound_radius <= -self.vivarium.tank_dimensions[0] / 2)):
@@ -243,7 +246,6 @@ class Linkage(Component, EnvironmentObject):
 
         # Access the Vivarium and its attributes as self.vivarium
         self.update()
-        # pass
 
 
 class ModelDragonfly(Component):
@@ -259,9 +261,6 @@ class ModelDragonfly(Component):
                  display_obj: Displayable | None = None) -> None:
         super().__init__(position, display_obj)
         self.contextParent = parent
-        
-        # body = Sphere(Point(0,0,0), shaderProg, [1, 0.2333, 0.3333], Ct.GREEN)
-        # face = Sphere(Point(0, +1e-4, 0.4), shaderProg, [0.2, 0.15, 0.1667], Ct.DARKGREEN)
 
         body = Sphere(Point(0, 0, 0), shaderProg, [0.11665, 0.11665, 0.35], Ct.GREEN)
 

@@ -25,6 +25,7 @@ class Vivarium(Component):
     parent: object | None = None
     tank: Tank | None = None
     tank_dimensions: list[float] | None = None
+    toDelete: list[Component]
 
     ##### BONUS 6 (TODO 6 for CS680 Students): Feed your creatures
     # Requirements:
@@ -41,6 +42,7 @@ class Vivarium(Component):
         self.shaderProg = shaderProg
 
         self.tank_dimensions = [4, 4, 4]
+        self.toDelete = []
         tank = Tank(Point((0,0,0)), shaderProg, self.tank_dimensions)
         super(Vivarium, self).__init__(Point((0, 0, 0)))
 
@@ -63,6 +65,9 @@ class Vivarium(Component):
             if isinstance(c, EnvironmentObject):
                 c.animationUpdate()
                 c.stepForward(potentialsOn)
+
+                for comp in self.toDelete:
+                    self.delObjInTank(comp)
 
         self.update()
 
