@@ -66,15 +66,21 @@ class Vivarium(Component):
                 c.animationUpdate()
                 c.stepForward(potentialsOn)
 
-                for comp in self.toDelete:
-                    self.delObjInTank(comp)
+        for comp in self.toDelete:
+            self.delObjInTank(comp)
+
+        self.toDelete.clear()
 
         self.update()
 
     def delObjInTank(self, obj: Component) -> None:
         if isinstance(obj, Component):
-            self.tank.children.remove(obj)
-            self.components.remove(obj)
+
+            if obj in self.tank.children[0].children:
+                self.tank.children[0].children.remove(obj)
+
+            if obj in self.components[1].children:
+                self.components[1].children.remove(obj)
 
     def addNewObjInTank(self, newComponent: Component) -> None:
         if isinstance(newComponent, Component):
