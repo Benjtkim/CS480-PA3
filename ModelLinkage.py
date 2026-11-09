@@ -75,18 +75,18 @@ class Linkage(Component, EnvironmentObject):
 
         self.dragonflyEaten = False
 
-        self.dragonfly = ModelDragonfly(parent, Point(-1.2,-1.2,-1.2), shaderProg, 0.1)
+        self.dragonfly = ModelDragonfly(parent, Point(-1.2, -1, -0.5), shaderProg, 0.1)
         self.addChild(self.dragonfly)
         self.dragonfly.bound_radius = 0.7
 
-        self.spider = ModelSpider(parent, Point(1.2, 1.2, 1.2), shaderProg, 0.1)
+        self.spider = ModelSpider(parent, Point(1.2, 1, 1.2), shaderProg, 0.1)
         self.addChild(self.spider)
         self.spider.bound_radius = 0.65
 
         self.components = self.dragonfly.components | self.spider.components 
         self.rotation_speed = [9, 3, -3]
         self.direction = [Point([random.random()-0.5 for _ in range(3)]).normalize(), Point([random.random()-0.5 for _ in range(3)]).normalize()] 
-        self.step_size = 0.01
+        self.step_size = 0.03
         
 
     def animationUpdate(self) -> None:
@@ -173,14 +173,37 @@ class Linkage(Component, EnvironmentObject):
 
         if not self.dragonflyEaten:
             distance = self.dragonfly.currentPos.distance(self.spider.currentPos)
-            gradiantPrey = (2 * (self.dragonfly.currentPos - self.spider.currentPos) * math.pow(math.e, -1 * (distance * distance))).normalize()
-            gradiantPred = (2 * (self.dragonfly.currentPos - self.spider.currentPos) * math.pow(math.e, -1 * (distance * distance))).normalize()
-            self.direction[0] = gradiantPrey
-            self.direction[1] = gradiantPred
-           
-            newPos_spider = self.spider.currentPos + self.step_size * self.direction[1]
+            gradiantPrey = (-2 * (self.spider.currentPos - self.dragonfly.currentPos) * math.pow(math.e, -1 * (distance * distance)))
+            gradiantPred = (2 * (self.dragonfly.currentPos - self.spider.currentPos) * math.pow(math.e, -1 * (distance * distance)))
+            wall_coords = [Point(1, 0, 0), Point(0, 1, 0), Point(0, 0, 1), Point(-1, 0, 0), Point(0, -1, 0), Point(0, 0, -1)]
+            for coord in wall_coords:
+                if coord.x == 1:
+                    distToWallPrey = 2 - self.dragonfly.currentPos.x
+                    distToWallPred = 2 - self.spider.currentPos.x
+                if coord.x == -1:
+                    distToWallPrey = 2 + self.dragonfly.currentPos.x
+                    distToWallPred = 2 + self.spider.currentPos.x
+                if coord.y == 1:
+                    distToWallPrey = 2 - self.dragonfly.currentPos.y
+                    distToWallPred = 2 - self.spider.currentPos.y
+                if coord.y == -1:
+                    distToWallPrey = 2 + self.dragonfly.currentPos.y
+                    distToWallPred = 2 + self.spider.currentPos.y
+                if coord.z == 1:
+                    distToWallPrey = 2 - self.dragonfly.currentPos.z
+                    distToWallPred = 2 - self.spider.currentPos.z
+                if coord.z == -1:
+                    distToWallPrey = 2 + self.dragonfly.currentPos.z
+                    distToWallPred = 2 + self.spider.currentPos.z
+                gradiantPrey += (-2 * (coord) * math.pow(math.e, -1 * (distToWallPrey * distToWallPrey))) * 0.1
+                gradiantPred += (-2 * (coord) * math.pow(math.e, -1 * (distToWallPred * distToWallPred))) * 0.1
+                
+            self.direction[0] = gradiantPrey.normalize()
+            self.direction[1] = gradiantPred.normalize()
 
             newPos_dragonfly = self.dragonfly.currentPos + self.step_size * self.direction[0]
+
+            newPos_spider = self.spider.currentPos + self.step_size * self.direction[1]
 
             distance = newPos_dragonfly.distance(newPos_spider)
 
@@ -242,6 +265,7 @@ class Linkage(Component, EnvironmentObject):
                 cross_product_spider[2] * math.sin(theta_spider / 2)
             ).toMatrix()
 
+            print(self.spider.currentPos)
             self.spider.setCurrentPosition(newPos_spider)
             self.spider.setPreRotation(transform_spider)
 
