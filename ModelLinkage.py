@@ -75,16 +75,32 @@ class Linkage(Component, EnvironmentObject):
 
         self.dragonflyEaten = False
 
-        self.dragonfly = ModelDragonfly(parent, Point(-1.2, -1, -0.5), shaderProg, 0.1)
-        self.addChild(self.dragonfly)
-        self.dragonfly.bound_radius = 0.58
+        self.spider = ModelSpider(parent, Point(1.2, 1, 1.2), shaderProg)
+        self.dragonfly1 = ModelDragonfly(parent, Point(-1.2, -1, -0.5), shaderProg,)
+        self.dragonfly2 = ModelDragonfly(parent, Point(0, 0, 0), shaderProg)
+        self.dragonfly3 = ModelDragonfly(parent, Point(-0.5, -0.6, -0.7), shaderProg)
 
-        self.spider = ModelSpider(parent, Point(1.2, 1, 1.2), shaderProg, 0.1)
+        # self.scene = []
+
+        # for comp in self.scene:
+        #     self.addChild(comp)
+        #     comp.bound_radius = 0.58
+        #     self.components |= comp.components
+        
         self.addChild(self.spider)
         self.spider.bound_radius = 0.57
 
-        self.components = self.dragonfly.components | self.spider.components 
-        self.rotation_speed = [9, 3, -3]
+        self.addChild(self.dragonfly1)
+        self.dragonfly1.bound_radius = 0.58
+
+        # self.addChild(self.dragonfly2)
+        # self.dragonfly2.bound_radius = 0.58
+
+        # self.addChild(self.dragonfly3)
+        # self.dragonfly3.bound_radius = 0.58
+
+        self.components = self.spider.components | self.dragonfly1.components 
+        self.rotation_speed = [3, -3, 9]
         self.direction = [Point([random.random()-0.5 for _ in range(3)]).normalize(), Point([random.random()-0.5 for _ in range(3)]).normalize()] 
         self.step_size = 0.03
         
@@ -100,21 +116,21 @@ class Linkage(Component, EnvironmentObject):
         iterableComponentsSpider1 = ["upperLeftLegLink1", "lowerLeftLegLink1", "upperRightLegLink1", "lowerRightLegLink1"]
         iterableComponentsSpider2 = ["middleLeftLegLink1", "middleRightLegLink1"]
         for str, comp in self.components.items():
-            if str in iterableComponentsFly:
-                newAngle = comp.wAngle + self.rotation_speed[0]
-                if newAngle < comp.wRange[0] or newAngle > comp.wRange[1]:
+            if str in iterableComponentsSpider1:
+                newAngle = comp.vAngle + self.rotation_speed[0]
+                if newAngle < comp.vRange[0] or newAngle > comp.vRange[1]:
                     self.rotation_speed[0] *= -1
-                comp.rotate(self.rotation_speed[0], comp.wAxis)
-            elif str in iterableComponentsSpider1:
+                comp.rotate(self.rotation_speed[0], comp.vAxis)
+            elif str in iterableComponentsSpider2:
                 newAngle = comp.vAngle + self.rotation_speed[1]
                 if newAngle < comp.vRange[0] or newAngle > comp.vRange[1]:
                     self.rotation_speed[1] *= -1
                 comp.rotate(self.rotation_speed[1], comp.vAxis)
-            elif str in iterableComponentsSpider2:
-                newAngle = comp.vAngle + self.rotation_speed[2]
-                if newAngle < comp.vRange[0] or newAngle > comp.vRange[1]:
+            elif str in iterableComponentsFly:
+                newAngle = comp.wAngle + self.rotation_speed[2]
+                if newAngle < comp.wRange[0] or newAngle > comp.wRange[1]:
                     self.rotation_speed[2] *= -1
-                comp.rotate(self.rotation_speed[2], comp.vAxis)
+                comp.rotate(self.rotation_speed[2], comp.wAxis)
 
         self.update()
 
@@ -169,143 +185,113 @@ class Linkage(Component, EnvironmentObject):
         #   [Boids animation algorithms](http://www.red3d.com/cwr/boids/) of Craig Reynolds.
         #   2. Your in-person demo should make the flocking behavior very obvious/easy to see in order to receive credit.
 
-        d_start = Point(0, 0, 1)
-
         if not self.dragonflyEaten:
-            distance = self.dragonfly.currentPos.distance(self.spider.currentPos)
-            gradiantPrey = (-2 * (self.spider.currentPos - self.dragonfly.currentPos) * math.pow(math.e, -1 * (distance * distance)))
-            gradiantPred = (2 * (self.dragonfly.currentPos - self.spider.currentPos) * math.pow(math.e, -1 * (distance * distance)))
+            distance = self.spider.currentPos.distance(self.dragonfly1.currentPos)
+            gradiantPred = (2 * (self.dragonfly1.currentPos - self.spider.currentPos) * math.pow(math.e, -1 * (distance * distance)))
+            gradiantPrey = (-2 * (self.spider.currentPos - self.dragonfly1.currentPos) * math.pow(math.e, -1 * (distance * distance)))
             wall_coords = [Point(1, 0, 0), Point(0, 1, 0), Point(0, 0, 1), Point(-1, 0, 0), Point(0, -1, 0), Point(0, 0, -1)]
             for coord in wall_coords:
                 if coord.x == 1:
-                    distToWallPrey = 2 - self.dragonfly.currentPos.x
+                    distToWallPrey = 2 - self.dragonfly1.currentPos.x
                     distToWallPred = 2 - self.spider.currentPos.x
                 if coord.x == -1:
-                    distToWallPrey = 2 + self.dragonfly.currentPos.x
+                    distToWallPrey = 2 + self.dragonfly1.currentPos.x
                     distToWallPred = 2 + self.spider.currentPos.x
                 if coord.y == 1:
-                    distToWallPrey = 2 - self.dragonfly.currentPos.y
+                    distToWallPrey = 2 - self.dragonfly1.currentPos.y
                     distToWallPred = 2 - self.spider.currentPos.y
                 if coord.y == -1:
-                    distToWallPrey = 2 + self.dragonfly.currentPos.y
+                    distToWallPrey = 2 + self.dragonfly1.currentPos.y
                     distToWallPred = 2 + self.spider.currentPos.y
                 if coord.z == 1:
-                    distToWallPrey = 2 - self.dragonfly.currentPos.z
+                    distToWallPrey = 2 - self.dragonfly1.currentPos.z
                     distToWallPred = 2 - self.spider.currentPos.z
                 if coord.z == -1:
-                    distToWallPrey = 2 + self.dragonfly.currentPos.z
+                    distToWallPrey = 2 + self.dragonfly1.currentPos.z
                     distToWallPred = 2 + self.spider.currentPos.z
-                gradiantPrey += (-2 * (coord) * math.pow(math.e, -1 * (distToWallPrey * distToWallPrey))) * 0.2
                 gradiantPred += (-2 * (coord) * math.pow(math.e, -1 * (distToWallPred * distToWallPred))) * 0.2
+                gradiantPrey += (-2 * (coord) * math.pow(math.e, -1 * (distToWallPrey * distToWallPrey))) * 0.2
                 
-            self.direction[0] = (self.direction[0] + gradiantPrey).normalize()
-            self.direction[1] = (self.direction[1] + gradiantPred).normalize()
+            self.direction[0] = (self.direction[0] + gradiantPred).normalize()
+            self.direction[1] = (self.direction[1] + gradiantPrey).normalize()
 
-            newPos_dragonfly = self.dragonfly.currentPos + self.step_size * self.direction[0]
+            newPos_spider = self.spider.currentPos + self.step_size * self.direction[0]
 
-            newPos_spider = self.spider.currentPos + self.step_size * self.direction[1]
+            newPos_dragonfly = self.dragonfly1.currentPos + self.step_size * self.direction[1]
 
-            distance = newPos_dragonfly.distance(newPos_spider)
+            distance = newPos_spider.distance(newPos_dragonfly)
 
-            radiiSum = self.dragonfly.bound_radius + self.spider.bound_radius
+            radiiSum = self.spider.bound_radius + self.dragonfly1.bound_radius
 
             if distance <= radiiSum:
-                self.vivarium.toDelete.append(self.dragonfly)
+                self.vivarium.toDelete.append(self.dragonfly1)
                 self.dragonflyEaten = True
 
-            if ((newPos_dragonfly.x + self.dragonfly.bound_radius >= self.vivarium.tank_dimensions[0] / 2) or 
-                (newPos_dragonfly.x - self.dragonfly.bound_radius <= -self.vivarium.tank_dimensions[0] / 2)):
-                self.direction[0] = Point(-self.direction[0].x, self.direction[0].y, self.direction[0].z)
+            checkTankCollision(self, newPos_spider, self.spider, 0)
+
+            checkTankCollision(self, newPos_dragonfly, self.dragonfly1, 1)
+
+            newPos_spider = self.spider.currentPos + self.step_size * self.direction[0]
             
-            if ((newPos_dragonfly.y + self.dragonfly.bound_radius >= self.vivarium.tank_dimensions[1] / 2) or 
-                (newPos_dragonfly.y - self.dragonfly.bound_radius <= -self.vivarium.tank_dimensions[1] / 2)):
-                self.direction[0] = Point(self.direction[0].x, -self.direction[0].y, self.direction[0].z)
+            newPos_dragonfly = self.dragonfly1.currentPos + self.step_size * self.direction[1]
 
-            if ((newPos_dragonfly.z + self.dragonfly.bound_radius >= self.vivarium.tank_dimensions[2] / 2) or 
-                (newPos_dragonfly.z - self.dragonfly.bound_radius <= -self.vivarium.tank_dimensions[2] / 2)):
-                self.direction[0] = Point(self.direction[0].x, self.direction[0].y, -self.direction[0].z)
-
-            if ((newPos_spider.x + self.spider.bound_radius >= self.vivarium.tank_dimensions[0] / 2) or 
-                (newPos_spider.x - self.spider.bound_radius <= -self.vivarium.tank_dimensions[0] / 2)):
-                self.direction[1] = Point(-self.direction[1].x, self.direction[1].y, self.direction[1].z)
-            
-            if ((newPos_spider.y + self.spider.bound_radius >= self.vivarium.tank_dimensions[1] / 2) or 
-                (newPos_spider.y - self.spider.bound_radius <= -self.vivarium.tank_dimensions[1] / 2)):
-                self.direction[1] = Point(self.direction[1].x, -self.direction[1].y, self.direction[1].z)
-
-            if ((newPos_spider.z + self.spider.bound_radius >= self.vivarium.tank_dimensions[2] / 2) or 
-                (newPos_spider.z - self.spider.bound_radius <= -self.vivarium.tank_dimensions[2] / 2)):
-                self.direction[1] = Point(self.direction[1].x, self.direction[1].y, -self.direction[1].z)
-
-            newPos_spider = self.spider.currentPos + self.step_size * self.direction[1]
-            
-            newPos_dragonfly = self.dragonfly.currentPos + self.step_size * self.direction[0]
-
-            d_end_dragonfly = self.direction[0]
-            cross_product_dragonfly = d_start.cross3d(d_end_dragonfly).normalize()
-            dot_product_dragonfly = d_start.dot(d_end_dragonfly)
-            theta_dragonfly = math.acos(dot_product_dragonfly)
-
-            d_end_spider = self.direction[1]
-            cross_product_spider = d_start.cross3d(d_end_spider).normalize()
-            dot_product_spider = d_start.dot(d_end_spider)
-            theta_spider = math.acos(dot_product_spider)
-
-            transform_dragonfly = Quaternion(
-                math.cos(theta_dragonfly / 2),
-                cross_product_dragonfly[0] * math.sin(theta_dragonfly / 2),
-                cross_product_dragonfly[1] * math.sin(theta_dragonfly / 2),
-                cross_product_dragonfly[2] * math.sin(theta_dragonfly / 2)
-            ).toMatrix()
-
-            transform_spider = Quaternion(
-                math.cos(theta_spider / 2),
-                cross_product_spider[0] * math.sin(theta_spider / 2),
-                cross_product_spider[1] * math.sin(theta_spider / 2),
-                cross_product_spider[2] * math.sin(theta_spider / 2)
-            ).toMatrix()
-
-            
             self.spider.setCurrentPosition(newPos_spider)
-            self.spider.setPreRotation(transform_spider)
-
-            self.dragonfly.setCurrentPosition(newPos_dragonfly)
-            self.dragonfly.setPreRotation(transform_dragonfly)
+            self.spider.setPreRotation(findOrientTransform(self, 0))
+            
+            self.dragonfly1.setCurrentPosition(newPos_dragonfly)
+            self.dragonfly1.setPreRotation(findOrientTransform(self, 1))
 
         else:
-            newPos_spider = self.spider.currentPos + self.step_size * self.direction[1]
-            if ((newPos_spider.x + self.spider.bound_radius >= self.vivarium.tank_dimensions[0] / 2) or 
-                (newPos_spider.x - self.spider.bound_radius <= -self.vivarium.tank_dimensions[0] / 2)):
-                self.direction[1] = Point(-self.direction[1].x, self.direction[1].y, self.direction[1].z)
-            
-            if ((newPos_spider.y + self.spider.bound_radius >= self.vivarium.tank_dimensions[1] / 2) or 
-                (newPos_spider.y - self.spider.bound_radius <= -self.vivarium.tank_dimensions[1] / 2)):
-                self.direction[1] = Point(self.direction[1].x, -self.direction[1].y, self.direction[1].z)
-
-            if ((newPos_spider.z + self.spider.bound_radius >= self.vivarium.tank_dimensions[2] / 2) or 
-                (newPos_spider.z - self.spider.bound_radius <= -self.vivarium.tank_dimensions[2] / 2)):
-                self.direction[1] = Point(self.direction[1].x, self.direction[1].y, -self.direction[1].z)
+            newPos_spider = self.spider.currentPos + self.step_size * self.direction[0]
+            checkTankCollision(self, newPos_spider, self.spider, 0)
                 
-            newPos_spider = self.spider.currentPos + self.step_size * self.direction[1]
-            d_end_spider = self.direction[1]
-            cross_product_spider = d_start.cross3d(d_end_spider).normalize()
-            dot_product_spider = d_start.dot(d_end_spider)
-            theta_spider = math.acos(dot_product_spider)
-
-            transform_spider = Quaternion(
-                math.cos(theta_spider / 2),
-                cross_product_spider[0] * math.sin(theta_spider / 2),
-                cross_product_spider[1] * math.sin(theta_spider / 2),
-                cross_product_spider[2] * math.sin(theta_spider / 2)
-            ).toMatrix()
+            newPos_spider = self.spider.currentPos + self.step_size * self.direction[0]
 
             self.spider.setCurrentPosition(newPos_spider)
-            self.spider.setPreRotation(transform_spider)
+            self.spider.setPreRotation(findOrientTransform(self, 0))
 
-        # Access the Vivarium and its attributes as self.vivarium
         self.update()
 
+def checkTankCollision(self, proposedPosition: Point, component: Component, index: int):
 
+    direction = self.direction[index]
+
+    half_x = self.vivarium.tank_dimensions[0] / 2
+    half_y = self.vivarium.tank_dimensions[1] / 2
+    half_z = self.vivarium.tank_dimensions[2] / 2
+
+    radius = component.bound_radius
+
+    if proposedPosition.x + radius >= half_x or proposedPosition.x - radius <= -half_x:
+        direction = Point(-direction.x, direction.y, direction.z)
+
+    if proposedPosition.y + radius >= half_y or proposedPosition.y - radius <= -half_y:
+        direction = Point(direction.x, -direction.y, direction.z)
+
+    if proposedPosition.z + radius >= half_z or proposedPosition.z - radius <= -half_z:
+        direction = Point(direction.x, direction.y, -direction.z)
+
+    self.direction[index] = direction.normalize()
+
+def findOrientTransform(self, index):
+
+    d_start = Point(0, 0, 1)
+    d_end = self.direction[index]
+    cross_product = d_start.cross3d(d_end).normalize()
+    dot_product = d_start.dot(d_end)
+
+    theta = math.acos(dot_product)
+    quatSine = math.sin(theta / 2)
+
+    transform = Quaternion(
+        math.cos(theta / 2),
+        cross_product[0] * quatSine,
+        cross_product[1] * quatSine,
+        cross_product[2] * quatSine
+    ).toMatrix()
+
+    return transform
+    
 class ModelDragonfly(Component):
     """
     Define our linkage model
