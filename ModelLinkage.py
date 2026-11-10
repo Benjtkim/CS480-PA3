@@ -73,6 +73,10 @@ class Linkage(Component, EnvironmentObject):
     def __init__(self, parent: object, position: Point, shaderProg: object) -> None:
         super(Linkage, self).__init__(position)
 
+        self.preyStillActive = True
+        self.preyEaten = 0
+        self.eatenPrey = set()
+
         # Potential creatures to be used in a scene.
         self.spider = ModelSpider(parent, Point(0, 0, 0), shaderProg)
         self.dragonfly1 = ModelDragonfly(parent, Point(1.4, 1.4, 1.4), shaderProg,)
@@ -85,6 +89,7 @@ class Linkage(Component, EnvironmentObject):
 
         # Current scene.
         self.scene = [self.spider, self.dragonfly1, self.dragonfly2, self.dragonfly3]
+        # self.scene = [self.spider, self.dragonfly1]
 
         # Initialize self.components to be used in the following for loop.
         self.components = {}
@@ -114,7 +119,8 @@ class Linkage(Component, EnvironmentObject):
 
         # A list for the potential calculated positions for each of the prey. The value at index 0 is -1 since
         # the spider is not a prey.
-        self.newPreyPositions = [-1, 0, 0, 0]
+        self.newPreyPositions = [0] * len(self.scene)
+        self.newPreyPositions[0] = -1
 
         # Initialize the step size.
         self.step_size = 0.03
@@ -204,75 +210,79 @@ class Linkage(Component, EnvironmentObject):
             
             wall_coords = [Point(1, 0, 0), Point(0, 1, 0), Point(0, 0, 1), Point(-1, 0, 0), Point(0, -1, 0), Point(0, 0, -1)]
 
-            radiiSum = self.spider.bound_radius + self.dragonfly1.bound_radius
-
             gradiantPred = Point(0, 0, 0)
 
-            for i, prey in enumerate(self.scene):
+            if self.preyStillActive:
+                for i, prey in enumerate(self.scene):
 
-                if i == 0:
-                    continue
+                    if i == 0:
+                        continue
 
-                distance = self.spider.currentPos.distance(prey.currentPos)
-                gradiantPred += (2 * (prey.currentPos - self.spider.currentPos) * math.pow(math.e, -1 * (distance * distance)))
-                gradiantPrey = (-2 * (self.spider.currentPos - prey.currentPos) * math.pow(math.e, -1 * (distance * distance)))
-                
-                for coord in wall_coords:
-                    if coord.x == 1:
-                        distToWallPrey = 2 - prey.currentPos.x
-                        distToWallPred = 2 - self.spider.currentPos.x
-                    if coord.x == -1:
-                        distToWallPrey = 2 + prey.currentPos.x
-                        distToWallPred = 2 + self.spider.currentPos.x
-                    if coord.y == 1:
-                        distToWallPrey = 2 - prey.currentPos.y
-                        distToWallPred = 2 - self.spider.currentPos.y
-                    if coord.y == -1:
-                        distToWallPrey = 2 + prey.currentPos.y
-                        distToWallPred = 2 + self.spider.currentPos.y
-                    if coord.z == 1:
-                        distToWallPrey = 2 - prey.currentPos.z
-                        distToWallPred = 2 - self.spider.currentPos.z
-                    if coord.z == -1:
-                        distToWallPrey = 2 + prey.currentPos.z
-                        distToWallPred = 2 + self.spider.currentPos.z
-                    gradiantPred += (-2 * (coord) * math.pow(math.e, -1 * (distToWallPred * distToWallPred))) * 0.2
-                    gradiantPrey += (-2 * (coord) * math.pow(math.e, -1 * (distToWallPrey * distToWallPrey))) * 0.2
+                    distance = self.spider.currentPos.distance(prey.currentPos)
+                    gradiantPred += (2 * (prey.currentPos - self.spider.currentPos) * math.pow(math.e, -1 * (distance * distance)))
+                    gradiantPrey = (-2 * (self.spider.currentPos - prey.currentPos) * math.pow(math.e, -1 * (distance * distance)))
+                    
+                    for coord in wall_coords:
+                        if coord.x == 1:
+                            distToWallPrey = 2 - prey.currentPos.x
+                            distToWallPred = 2 - self.spider.currentPos.x
+                        if coord.x == -1:
+                            distToWallPrey = 2 + prey.currentPos.x
+                            distToWallPred = 2 + self.spider.currentPos.x
+                        if coord.y == 1:
+                            distToWallPrey = 2 - prey.currentPos.y
+                            distToWallPred = 2 - self.spider.currentPos.y
+                        if coord.y == -1:
+                            distToWallPrey = 2 + prey.currentPos.y
+                            distToWallPred = 2 + self.spider.currentPos.y
+                        if coord.z == 1:
+                            distToWallPrey = 2 - prey.currentPos.z
+                            distToWallPred = 2 - self.spider.currentPos.z
+                        if coord.z == -1:
+                            distToWallPrey = 2 + prey.currentPos.z
+                            distToWallPred = 2 + self.spider.currentPos.z
+                        gradiantPred += (-2 * (coord) * math.pow(math.e, -1 * (distToWallPred * distToWallPred))) * 0.2
+                        gradiantPrey += (-2 * (coord) * math.pow(math.e, -1 * (distToWallPrey * distToWallPrey))) * 0.2
 
-                self.direction[i] = (self.direction[i] + gradiantPrey).normalize()
-                self.newPreyPositions[i] = (prey.currentPos + self.step_size * self.direction[i])
+                    self.direction[i] = (self.direction[i] + gradiantPrey).normalize()
+                    self.newPreyPositions[i] = (prey.currentPos + self.step_size * self.direction[i])
 
-            self.direction[0] = (self.direction[0] + gradiantPred).normalize()
+                self.direction[0] = (self.direction[0] + gradiantPred).normalize()
 
             newPos_spider = self.spider.currentPos + self.step_size * self.direction[0]
 
-            for i in range(1, len(self.newPreyPositions)):
-                dragonfly = getattr(self, f"dragonfly{i}")
-                self.newPreyPositions[i] = (
-                    dragonfly.currentPos + self.step_size * self.direction[i]
-                )
+            if self.preyStillActive:
 
-                distance = newPos_spider.distance(self.newPreyPositions[i])
+                for i in range(1, len(self.newPreyPositions)):
+                    dragonfly = self.scene[i]
+                    self.newPreyPositions[i] = (
+                        dragonfly.currentPos + self.step_size * self.direction[i]
+                    )
+                    radiiSum = self.spider.bound_radius + dragonfly.bound_radius
+                    
+                    distance = newPos_spider.distance(self.newPreyPositions[i])
 
-                if distance <= radiiSum:
-                    if dragonfly not in self.vivarium.toDelete:
+                    if distance <= radiiSum and dragonfly not in self.eatenPrey:
+                        self.eatenPrey.add(dragonfly)
                         self.vivarium.toDelete.append(dragonfly)
+                        self.preyEaten = len(self.eatenPrey)
 
-                checkTankCollision(self, self.newPreyPositions[i], dragonfly, i)
-                self.newPreyPositions[i] = dragonfly.currentPos + self.step_size * self.direction[i]
+                    checkTankCollision(self, self.newPreyPositions[i], dragonfly, i)
+                    self.newPreyPositions[i] = dragonfly.currentPos + self.step_size * self.direction[i]
+                self.preyStillActive = self.preyEaten < len(self.scene) - 1
 
-            for i in range(1, len(self.newPreyPositions)):
-                for j in range(i + 1, len(self.newPreyPositions)):
-                    dragonflyOne = getattr(self, f"dragonfly{i}")
-                    dragonflyTwo = getattr(self, f"dragonfly{j}")
-                    if checkCreatureCollision(self.newPreyPositions[i], self.newPreyPositions[j], dragonflyOne.bound_radius, dragonflyTwo.bound_radius):
-                        self.direction[i] = Point(-self.direction[i].x, -self.direction[i].y, -self.direction[i].z)
-                        self.direction[j] = Point(-self.direction[j].x, -self.direction[j].y, -self.direction[j].z)
+                for i in range(1, len(self.newPreyPositions)):
+                    for j in range(i + 1, len(self.newPreyPositions)):
+                        dragonflyOne = self.scene[i]
+                        dragonflyTwo = self.scene[j]
+                        if checkCreatureCollision(self.newPreyPositions[i], self.newPreyPositions[j], dragonflyOne.bound_radius, dragonflyTwo.bound_radius):
+                            self.direction[i] = Point(-self.direction[i].x, -self.direction[i].y, -self.direction[i].z)
+                            self.direction[j] = Point(-self.direction[j].x, -self.direction[j].y, -self.direction[j].z)
 
-            for i in range(1, len(self.newPreyPositions)):
-                dragonfly = getattr(self, f"dragonfly{i}")
-                dragonfly.setCurrentPosition(self.newPreyPositions[i])
-                dragonfly.setPreRotation(findOrientTransform(self, i))
+                for i in range(1, len(self.newPreyPositions)):
+                    dragonfly = self.scene[i]
+                    dragonfly.setCurrentPosition(self.newPreyPositions[i])
+                    dragonfly.setPreRotation(findOrientTransform(self, i))
 
             checkTankCollision(self, newPos_spider, self.spider, 0)
 
@@ -288,37 +298,39 @@ class Linkage(Component, EnvironmentObject):
                 
             newPos_spider = self.spider.currentPos + self.step_size * self.direction[0]
 
-            for i in range(1, len(self.newPreyPositions)):
-                dragonfly = getattr(self, f"dragonfly{i}")
-                self.newPreyPositions[i] = dragonfly.currentPos + self.step_size * self.direction[i]
-                checkTankCollision(self, self.newPreyPositions[i], dragonfly, i)
-                self.newPreyPositions[i] = dragonfly.currentPos + self.step_size * self.direction[i]
+            if self.preyStillActive:
+                for i in range(1, len(self.newPreyPositions)):
+                    dragonfly = self.scene[i]
+                    self.newPreyPositions[i] = dragonfly.currentPos + self.step_size * self.direction[i]
+                    checkTankCollision(self, self.newPreyPositions[i], dragonfly, i)
+                    self.newPreyPositions[i] = dragonfly.currentPos + self.step_size * self.direction[i]
 
-            for i in range(len(self.newPreyPositions)):
-                for j in range(i + 1, len(self.newPreyPositions)):
-                    if i == 0:
-                        creature2 = getattr(self, f"dragonfly{j}")
-                        if checkCreatureCollision(newPos_spider, self.newPreyPositions[j], self.spider.bound_radius, creature2.bound_radius):
-                            self.direction[i] = Point(-self.direction[i].x, -self.direction[i].y, -self.direction[i].z)
-                            self.direction[j] = Point(-self.direction[j].x, -self.direction[j].y, -self.direction[j].z)
-                            newPos_spider = self.spider.currentPos + self.step_size * self.direction[i]
-                            self.newPreyPositions[j] = creature2.currentPos + self.step_size * self.direction[j]
-                    else:
-                        creature1 = getattr(self, f"dragonfly{i}")
-                        creature2 = getattr(self, f"dragonfly{j}")
-                        if checkCreatureCollision(self.newPreyPositions[i], self.newPreyPositions[j], creature1.bound_radius, creature2.bound_radius):
-                            self.direction[i] = Point(-self.direction[i].x, -self.direction[i].y, -self.direction[i].z)
-                            self.direction[j] = Point(-self.direction[j].x, -self.direction[j].y, -self.direction[j].z)
-                            self.newPreyPositions[i] = creature1.currentPos + self.step_size * self.direction[i]
-                            self.newPreyPositions[j] = creature2.currentPos + self.step_size * self.direction[j]
+                for i in range(len(self.newPreyPositions)):
+                    for j in range(i + 1, len(self.newPreyPositions)):
+                        if i == 0:
+                            creature2 = self.scene[j]
+                            if checkCreatureCollision(newPos_spider, self.newPreyPositions[j], self.spider.bound_radius, creature2.bound_radius):
+                                self.direction[i] = Point(-self.direction[i].x, -self.direction[i].y, -self.direction[i].z)
+                                self.direction[j] = Point(-self.direction[j].x, -self.direction[j].y, -self.direction[j].z)
+                                newPos_spider = self.spider.currentPos + self.step_size * self.direction[i]
+                                self.newPreyPositions[j] = creature2.currentPos + self.step_size * self.direction[j]
+                        else:
+                            creature1 = self.scene[i]
+                            creature2 = self.scene[j]
+                            if checkCreatureCollision(self.newPreyPositions[i], self.newPreyPositions[j], creature1.bound_radius, creature2.bound_radius):
+                                self.direction[i] = Point(-self.direction[i].x, -self.direction[i].y, -self.direction[i].z)
+                                self.direction[j] = Point(-self.direction[j].x, -self.direction[j].y, -self.direction[j].z)
+                                self.newPreyPositions[i] = creature1.currentPos + self.step_size * self.direction[i]
+                                self.newPreyPositions[j] = creature2.currentPos + self.step_size * self.direction[j]
 
             self.spider.setCurrentPosition(newPos_spider)
             self.spider.setPreRotation(findOrientTransform(self, 0))
 
-            for i in range(1, len(self.newPreyPositions)):
-                dragonfly = getattr(self, f"dragonfly{i}")
-                dragonfly.setCurrentPosition(self.newPreyPositions[i])
-                dragonfly.setPreRotation(findOrientTransform(self, i))
+            if self.preyStillActive:
+                for i in range(1, len(self.newPreyPositions)):
+                    dragonfly = self.scene[i]
+                    dragonfly.setCurrentPosition(self.newPreyPositions[i])
+                    dragonfly.setPreRotation(findOrientTransform(self, i))
 
 
         self.update()
