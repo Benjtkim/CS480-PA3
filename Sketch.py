@@ -26,6 +26,7 @@ from GLBuffer import VAO, VBO, EBO, Texture
 from Vivarium import Vivarium
 from Quaternion import Quaternion
 import GLUtility
+from ModelLinkage import *
 
 
 try:
@@ -384,9 +385,15 @@ class Sketch(CanvasBase):
         :param keycode: wxpython keyboard event's keycode
         :return: None
         """
+
+        # Find the Linkage instance inside the Vivarium.
+        linkage = next((child for child in self.vivarium.tank.children if isinstance(child, Linkage)), None)
+
         # Default Scene
         if chr(keycode) in "rR":
             # reset viewing angle
+            linkage.setScene(False)
+            print("hello")
             self.resetView()
             self.update()
 
@@ -405,6 +412,7 @@ class Sketch(CanvasBase):
         # A test scene with only one (1) predator and one (1) prey
         if chr(keycode) in "tT":
             # reset viewing angle
+            linkage.setScene(True)
             self.resetView()
             self.update()
 
