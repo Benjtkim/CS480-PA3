@@ -45,24 +45,6 @@ try:
 except ImportError:
     raise ImportError("Required dependency PyOpenGL not present")
 
-##### TODO 1: Construct your two different creatures
-# Requirements:
-#   1. Your predator and prey must be visually and semantically distinct from one another, AND distinct from the default
-#   "jellyfish"-like creature (Linkage) below. Each design should clearly correspond to some kind of creature.
-#   2. For the basic parts of your creatures, feel free to use routines provided with the previous assignment.
-#   You are also free to create your own basic parts, but they must be polyhedral (solid).
-#   You are welcome to reuse your PA2 creature in this assignment.
-#   3. The creatures you design should have moving linkages of the basic parts: legs, arms, wings, antennae,
-#   fins, tentacles, etc.
-#   4. Model requirements:
-#         1. Predator: Should have at least two moving parts in addition to the main body.
-#         2. Prey: Should have at least one moving part in addition to the main body.
-#         3. The predator and prey should have distinguishable, different colors.
-#         4. All models should have a distinguishable head/front relative to the tail/rear side.
-#   5. Vivarium requirements:
-#         1. A test scene with only one (1) predator and one (1) prey, bound to key "T/t".
-#         2. A default scene with at least one (1) predator and two (2) prey, reset after pressing key "R/r".
-
 class Linkage(Component, EnvironmentObject):
     """
     A Linkage with animation enabled and is defined as an object in environment
@@ -73,9 +55,14 @@ class Linkage(Component, EnvironmentObject):
     def __init__(self, parent: object, position: Point, shaderProg: object) -> None:
         super(Linkage, self).__init__(position)
 
+        # Sets the default scene when simulation is started up.
+
+        # Fields to determine which creatures are still in the scene/whether there are any 
+        # prey creatures (dragonflies) left.
         self.preyStillActive = True
         self.preyEaten = 0
         self.eatenPrey = set()
+        self.delected_creatures = [False, False, False, False]
 
         # Potential creatures to be used in a scene.
         self.spider = ModelSpider(parent, Point(0, 0, 0), shaderProg)
@@ -87,12 +74,8 @@ class Linkage(Component, EnvironmentObject):
         # corresponds to the spider's middle legs, and index 2 corresponds to wings of the dragonflies.
         self.rotation_speed = [3, -3, 9]
 
-        # Current scene.
+        # Default scene.
         self.scene = [self.spider, self.dragonfly1, self.dragonfly2, self.dragonfly3]
-
-        self.delected_creatures = [False, False, False, False]
-
-        # self.scene = [self.spider, self.dragonfly1]
 
         # Initialize self.components to be used in the following for loop.
         self.components = {}
@@ -128,9 +111,10 @@ class Linkage(Component, EnvironmentObject):
         # Initialize the step size.
         self.step_size = 0.03
 
+    # Function that sets the corresponding scene depending on if t or r is pressed.
     def setScene(self, testScene: bool) -> None:
 
-        # Remove all existing creature children.
+        # Remove all creatures that were left in the prior scene.
         self.children.clear()
 
         # Reset every creature to its original position.
@@ -166,9 +150,7 @@ class Linkage(Component, EnvironmentObject):
                 })
 
         # Reset movement directions.
-        rand_direction = Point(
-            [random.random() - 0.5 for _ in range(3)]
-        ).normalize()
+        rand_direction = Point([random.random() - 0.5 for _ in range(3)]).normalize()
 
         self.direction = [rand_direction.copy() for _ in self.scene]
 
@@ -188,15 +170,16 @@ class Linkage(Component, EnvironmentObject):
         
 
     def animationUpdate(self) -> None:
-        ##### TODO 2: Animate your creature!
-        # Requirements:
-        #   1. Set reasonable joint limits for your creature to avoid self-intersections.
-        #   2. The linkages should move back and forth in a periodic motion, as the creatures move about the vivarium.
-        #   For example, a bird flaps its wings, a fish wiggles its fin(s), a terrestrial creature moves its legs.
-        
-        iterableComponentsFly = ["wing1", "wing2", "wing3", "wing4"]
+
+        # The components that should be animated if the creature is a dragonfly are its wings. If the creature is a spider,
+        # its legs should be animated.
+        iterableComponentsDragonfly = ["wing1", "wing2", "wing3", "wing4"]
         iterableComponentsSpider1 = ["upperLeftLegLink1", "lowerLeftLegLink1", "upperRightLegLink1", "lowerRightLegLink1"]
         iterableComponentsSpider2 = ["middleLeftLegLink1", "middleRightLegLink1"]
+
+        # For each component in self.components, check if if is an interable component. If it is, find the new angle
+        # the limb should be rotated by, and if it's outside the bounds, rotate in the other direction/
+        # negate the rotation speed. Finally, carry out hte rotation.
         for str, comp in self.components.items():
             if str in iterableComponentsSpider1:
                 newAngle = comp.vAngle + self.rotation_speed[0]
@@ -208,7 +191,7 @@ class Linkage(Component, EnvironmentObject):
                 if newAngle < comp.vRange[0] or newAngle > comp.vRange[1]:
                     self.rotation_speed[1] *= -1
                 comp.rotate(self.rotation_speed[1], comp.vAxis)
-            elif str in iterableComponentsFly or (str.startswith("dragonfly") and "wing" in str):
+            elif str in iterableComponentsDragonfly or (str.startswith("dragonfly") and "wing" in str):
                 newAngle = comp.wAngle + self.rotation_speed[2]
                 if newAngle < comp.wRange[0] or newAngle > comp.wRange[1]:
                     self.rotation_speed[2] *= -1
@@ -218,48 +201,6 @@ class Linkage(Component, EnvironmentObject):
 
     def stepForward(self, potentialsOn: bool) -> None:
 
-        ##### TODO 3: Tank collision detection
-        # Requirements:
-        #   1. Your creatures should always stay within the fixed-size 3D "tank". You should do collision detection
-        #   between the creatures and the tank walls. When creatures hit the tank walls, they should turn and change
-        #   direction to stay within the tank.
-        #   2. Use a bounding sphere or bounding box for collision detection. (Spheres are easiest.)
-        #   3. After collision, the outgoing direction should be a proper reflection. You can use a reflection vector
-        #   about a plane to decide the after-collision direction.
-        #   4. Before implementing TODO 4, you can test this by initializing each creature with a random "target"
-        #   direction and having it move continuously in that direction until a collision occurs.
-
-        ##### TODO 4: "Hunting" simulation with potentials and creature collision
-        # Requirements:
-        #   1. Your creatures should have a prey/predator relationship. For example, you could have a bug being chased
-        #   by a spider, or a fish eluding a shark. This means your creature should react to other creatures in the tank.
-        #       1. Use potential functions to change its direction based on other creatures' locations, their
-        #       inter-creature distances, and their current configuration.
-        #       2. You should detect collisions between creatures.
-        #           1. Predator-prey collision: The prey should disappear (get eaten) from the tank.
-        #           2. Collision between the same species: They should bounce apart from each other. You can use a
-        #           reflection vector about a plane to decide the after-collision direction.
-        #   2. Your creatures should be able to move in 3 dimensions, not only on a plane.
-        #   3. Respect potentialsOn (toggled with the "P" key, ON by default):
-        #       * ON (teal background): all of the above behavior applies.
-        #       * OFF (gray background): creatures do not react to one another. They keep their last target direction
-        #       and move in a straight line, changing direction only when they collide with another creature or the
-        #       tank walls.
-        #   We recommend modularizing shared functions (bouncing two creatures off each other, checking the tank
-        #   walls, etc.) within the EnvironmentObject class so that all creatures can inherit them.
-
-        ##### TODO 5: Creature orientation
-        # Requirements:
-        #   1. Creatures should face the "target" direction in which they are currently moving. For instance, a fish
-        #   should be facing the direction in which it swims. Since creatures move in 3 dimensions, they should be
-        #   able to face any direction in 3D space.
-        #   2. You have multiple choices as to how you accomplish this:
-        #       * Non-cumulative (rotate from the model's default facing direction to the target facing direction
-        #       on each frame): orthonormal basis transformation, or quaternions (use .toMatrix() to get the
-        #       final 4x4 transform)
-        #       * Cumulative (keep track of a "total" rotation that the creature has accumulated over its lifetime,
-        #       hardest): quaternions
-
         ##### BONUS 7: Group behaviors
         # Requirements:
         #   1. Add at least 5 creatures to the vivarium and make it possible for creatures to engage in group behaviors,
@@ -268,81 +209,133 @@ class Linkage(Component, EnvironmentObject):
         #   2. Your in-person demo should make the flocking behavior very obvious/easy to see in order to receive credit.
 
         if potentialsOn:
-            
+
+            # Normal vectors to each of the walls.
             wall_coords = [Point(1, 0, 0), Point(0, 1, 0), Point(0, 0, 1), Point(-1, 0, 0), Point(0, -1, 0), Point(0, 0, -1)]
 
+            # The gradiant for the pred will start off as (0, 0, 0) and will need to be accumulated to its final value.
             gradiantPred = Point(0, 0, 0)
 
+            # No need to do calcuations involving dragonflies if there aren't any.
             if self.preyStillActive:
+
+                # Loops through each creature in self.scene, but we want to iterate over only the prey creatures.
                 for i, prey in enumerate(self.scene):
 
+                    # If the index is 0, the loop is looking at the spider. If self.delected_creatures[i] is true,
+                    # the corresponding creature is no longer a part of the scene. In either case, we need to 
+                    # ignore this creature.
                     if i == 0 or self.delected_creatures[i]:
                         continue
 
+                    # Calculate the distance from the spider to the current prey, and add to gradiantPred or set 
+                    # gradiantPrey accordingly using that distance. The calculation prey.currentPos - self.spider.currentPos
+                    # is the vector that points from the spider to the dragonfly, so we want to add by this vector to 
+                    # encourage the spider to move towards the dragonfly. On the other hand, self.spider.currentPos - 
+                    # prey.currentPos points from the dragonfly to the spider so we want to negate it so the dragonfly 
+                    # moves away from the spider.
                     distance = self.spider.currentPos.distance(prey.currentPos)
                     gradiantPred += (2 * (prey.currentPos - self.spider.currentPos) * math.pow(math.e, -1 * (distance * distance)))
                     gradiantPrey = (-2 * (self.spider.currentPos - prey.currentPos) * math.pow(math.e, -1 * (distance * distance)))
-                    
+
+                    # Each of the walls will also have a negative potential, as we want each creature to stay inside their bounds. 
+                    # So, for each of the wall normals, get the distance from that wall to the prey, and add the resulting gradiant 
+                    # to the overall prey gradiant. 
                     for coord in wall_coords:
                         if coord.x == 1:
                             distToWallPrey = 2 - prey.currentPos.x
-                            distToWallPred = 2 - self.spider.currentPos.x
                         if coord.x == -1:
                             distToWallPrey = 2 + prey.currentPos.x
-                            distToWallPred = 2 + self.spider.currentPos.x
                         if coord.y == 1:
                             distToWallPrey = 2 - prey.currentPos.y
-                            distToWallPred = 2 - self.spider.currentPos.y
                         if coord.y == -1:
                             distToWallPrey = 2 + prey.currentPos.y
-                            distToWallPred = 2 + self.spider.currentPos.y
                         if coord.z == 1:
                             distToWallPrey = 2 - prey.currentPos.z
-                            distToWallPred = 2 - self.spider.currentPos.z
                         if coord.z == -1:
                             distToWallPrey = 2 + prey.currentPos.z
-                            distToWallPred = 2 + self.spider.currentPos.z
-                        gradiantPred += (-2 * (coord) * math.pow(math.e, -1 * (distToWallPred * distToWallPred))) * 0.2
                         gradiantPrey += (-2 * (coord) * math.pow(math.e, -1 * (distToWallPrey * distToWallPrey))) * 0.2
 
+                    # Add the accumulated prey gradiant to the previous direction and normalize to get the direction
+                    # for this frame. Calculate using currentPos to get the new position of the dragonfly for
+                    # this frame.
                     self.direction[i] = (self.direction[i] + gradiantPrey).normalize()
-                    # self.direction[i] = gradiantPrey.normalize()
+                    # self.direction[i] = gradiantPrey.normalize() # Either do this or the above. The above looks better.
                     self.newPreyPositions[i] = (prey.currentPos + self.step_size * self.direction[i])
 
-                # self.direction[0] = (self.direction[0] + gradiantPred).normalize()
-                self.direction[0] = gradiantPred.normalize()
+                # Same idea as above but for the spider.
+                for coord in wall_coords:
+                    if coord.x == 1:
+                        distToWallPred = 2 - self.spider.currentPos.x
+                    if coord.x == -1:
+                        distToWallPred = 2 + self.spider.currentPos.x
+                    if coord.y == 1:
+                        distToWallPred = 2 - self.spider.currentPos.y
+                    if coord.y == -1:
+                        distToWallPred = 2 + self.spider.currentPos.y
+                    if coord.z == 1:
+                        distToWallPred = 2 - self.spider.currentPos.z
+                    if coord.z == -1:
+                        distToWallPred = 2 + self.spider.currentPos.z
+                    gradiantPred += (-2 * (coord) * math.pow(math.e, -1 * (distToWallPred * distToWallPred))) * 0.2
+
+                self.direction[0] = (self.direction[0] + gradiantPred).normalize()
+                # self.direction[0] = gradiantPred.normalize() # Either do this or the above. The above looks better.
 
             newPos_spider = self.spider.currentPos + self.step_size * self.direction[0]
 
+            # The code in this if statement checks if a spider has collided with any of the dragonflies, 
+            # or if any of the dragonflies have collided with any other dragonfly.
             if self.preyStillActive:
 
-                for i in range(1, len(self.newPreyPositions)):
+                # For each dragonfly in the current scene:
+                for i in range(1, len(self.scene)):
 
+                    # If it had been deleted continue.
                     if self.delected_creatures[i]:
                         continue
 
+                    # Get the dragonfly object, find the sum of radii between it and the spider, 
+                    # and get the current distance between them.
                     dragonfly = self.scene[i]
-                    # self.newPreyPositions[i] = (
-                    #     dragonfly.currentPos + self.step_size * self.direction[i]
-                    # )
                     radiiSum = self.spider.bound_radius + dragonfly.bound_radius
-                    
                     distance = newPos_spider.distance(self.newPreyPositions[i])
 
+                    # If they're colliding (if the distance between them is less than the 
+                    # sum of the radii), and the dragonfly has not been deleted yet,
                     if distance <= radiiSum and dragonfly not in self.eatenPrey:
+
+                        # add it to the eatenPrey set, mark it for deletion by appending
+                        # it to the vivarium's toDelete list, mark that it has been deleted
+                        # in self.deleted_creatures, and set the count of prey eaten to 
+                        # how many prey are in the eatenPrey set, as those are the same.
                         self.eatenPrey.add(dragonfly)
                         self.vivarium.toDelete.append(dragonfly)
                         self.delected_creatures[i] = True
                         self.preyEaten = len(self.eatenPrey)
 
+                    # Check if it is colliding with the tank. If it is, the helper function
+                    # would have reversed its direction accordingly, so its new position has to 
+                    # be recalculated.
                     checkTankCollision(self, self.newPreyPositions[i], dragonfly, i)
                     self.newPreyPositions[i] = dragonfly.currentPos + self.step_size * self.direction[i]
+
+                # Check to see if there are any prey left.
                 self.preyStillActive = self.preyEaten < len(self.scene) - 1
 
+                # This nested for loop will iterate over each unique pair of dragonflies.
                 for i in range(1, len(self.newPreyPositions)):
                     for j in range(i + 1, len(self.newPreyPositions)):
+
+                        # Get the dragonfly objects from self.scene.
                         dragonflyOne = self.scene[i]
                         dragonflyTwo = self.scene[j]
+
+                        # If the two are colliding, the checkCreatureCollision helper function will 
+                        # return true. Get the two normal vectors of that collision, and use
+                        # the given reflect function to alter the directions accordingly.
+                        # After the directions have been altered, find the new positions the dragonflies
+                        # should be at.
                         if checkCreatureCollision(self.newPreyPositions[i], self.newPreyPositions[j], dragonflyOne.bound_radius, dragonflyTwo.bound_radius):
                             normalVector1 = self.newPreyPositions[i] - self.newPreyPositions[j]
                             normalVector2 = -1 * normalVector1
@@ -350,19 +343,26 @@ class Linkage(Component, EnvironmentObject):
                             reflectedVectorj = self.direction[j].reflect(normalVector2)
                             self.direction[i] = reflectedVectori
                             self.direction[j] = reflectedVectorj
+                            self.newPreyPositions[i] = dragonflyOne.currentPos + self.step_size * self.direction[i]
+                            self.newPreyPositions[j] = dragonflyTwo.currentPos + self.step_size * self.direction[j]
 
+                # For each dragonfly, set its current position to what was calculated, and its pre-rotation,
+                # which is calculated in the helper function findOrientTransform.
                 for i in range(1, len(self.newPreyPositions)):
                     dragonfly = self.scene[i]
                     dragonfly.setCurrentPosition(self.newPreyPositions[i])
                     dragonfly.setPreRotation(findOrientTransform(self, i))
 
+            # Check if the spider is colliding with the tank.
             checkTankCollision(self, newPos_spider, self.spider, 0)
-
             newPos_spider = self.spider.currentPos + self.step_size * self.direction[0]
-            
+
+            # Set the spider's current position and pre-rotation.
             self.spider.setCurrentPosition(newPos_spider)
             self.spider.setPreRotation(findOrientTransform(self, 0))
-            
+
+        # If potentials are not on, all we need to worry about are tank and creature collisions.
+        # Look above for that information.
         else:
             newPos_spider = self.spider.currentPos + self.step_size * self.direction[0]
             checkTankCollision(self, newPos_spider, self.spider, 0)
@@ -371,6 +371,10 @@ class Linkage(Component, EnvironmentObject):
 
             if self.preyStillActive:
                 for i in range(1, len(self.newPreyPositions)):
+
+                    if self.delected_creatures[i]:
+                        continue
+
                     dragonfly = self.scene[i]
                     self.newPreyPositions[i] = dragonfly.currentPos + self.step_size * self.direction[i]
                     checkTankCollision(self, self.newPreyPositions[i], dragonfly, i)
@@ -403,6 +407,8 @@ class Linkage(Component, EnvironmentObject):
 
             if self.preyStillActive:
                 for i in range(1, len(self.newPreyPositions)):
+                    if self.delected_creatures[i]:
+                        continue
                     dragonfly = self.scene[i]
                     dragonfly.setCurrentPosition(self.newPreyPositions[i])
                     dragonfly.setPreRotation(findOrientTransform(self, i))
@@ -410,14 +416,19 @@ class Linkage(Component, EnvironmentObject):
 
         self.update()
 
+# Function takes in a proposed position, the creature, and its index in self.scene to determine
+# whether the creature is colliding with any of the tank walls.
 def checkTankCollision(self, proposedPosition: Point, component: Component, index: int):
 
+    # Get the direciton of the creature so it can be modified in the case of a collision.
     direction = self.direction[index]
 
+    # The tank has dimensions [4, 4, 4], and the center is (0, 0, 0), so to determine a collision, 
+    # we check to see if the position of the creature added by its bound radius is greater than or 
+    # equal to half the tank's dimensions.
     half_x = self.vivarium.tank_dimensions[0] / 2
     half_y = self.vivarium.tank_dimensions[1] / 2
     half_z = self.vivarium.tank_dimensions[2] / 2
-
     radius = component.bound_radius
 
     if proposedPosition.x + radius >= half_x or proposedPosition.x - radius <= -half_x:
@@ -429,14 +440,21 @@ def checkTankCollision(self, proposedPosition: Point, component: Component, inde
     if proposedPosition.z + radius >= half_z or proposedPosition.z - radius <= -half_z:
         direction = Point(direction.x, direction.y, -direction.z)
 
+    # Set self.direction[index] equal to the calculated direction.
     self.direction[index] = direction.normalize()
 
+# To determine a collision between two creatures, see if the distance between
+# them is less than or equal to the sum of the radii of their bounding 
+# spheres.
 def checkCreatureCollision(pos1 : Point, pos2 : Point, radius1, radius2):
     radiiSum = radius1 + radius2
     distance = pos1.distance(pos2)
     if distance <= radiiSum:
         return True
 
+# Used the material in discussion to make the quaternion for creature
+# orientation using d_start and d_end, where d_start is the initial direction 
+# the crature is facing, and d_end is the direction it intends to travel in.
 def findOrientTransform(self, index):
 
     d_start = Point(0, 0, 1)
@@ -456,7 +474,7 @@ def findOrientTransform(self, index):
 
     return transform
 
-    
+# Models a dragonfly.
 class ModelDragonfly(Component):
     """
     Define our linkage model
@@ -520,6 +538,7 @@ class ModelDragonfly(Component):
         wing3.setRotateExtent(wing3.wAxis, -30, 30)
         wing4.setRotateExtent(wing4.wAxis, -30, 30)
 
+# Models a spider.
 class ModelSpider(Component):
     """
     Define our linkage model

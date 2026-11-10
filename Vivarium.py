@@ -76,6 +76,8 @@ class Vivarium(Component):
     def delObjInTank(self, obj: Component) -> None:
         if isinstance(obj, Component):
 
+            # Had to work by trial and error to find where
+            # my created objects were being stored.
             if obj in self.tank.children[0].children:
                 self.tank.children[0].children.remove(obj)
 
